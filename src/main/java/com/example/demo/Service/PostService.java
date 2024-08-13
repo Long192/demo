@@ -1,7 +1,6 @@
 package com.example.demo.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -9,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.Enum.StatusEnum;
@@ -30,12 +30,14 @@ public class PostService {
     private ImageService imageService;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private UserService userService;
 
     public void createPost(CreatePostRequest request) throws Exception {
         Post post = new Post();
-        Optional<User> user = userRepository.findById(request.getUserId());
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         post.setContent(request.getContent());
-        user.ifPresent(post::setUser);
+        post.setUser(user);
         post.setStatus(StatusEnum.active);
         postRepository.save(post);
         if (!request.getImages().getFirst().isEmpty()) {
@@ -49,16 +51,8 @@ public class PostService {
         return postPage.map(source -> modelMapper.map(source, PostDto.class));
     }
 
-    public PostDto findById(Long id) throws Exception {
-        return modelMapper.map(findPostById(id).get(), PostDto.class);
-    }
-
-    public Optional<Post> findPostById(Long id) throws Exception {
-        Optional<Post> post = postRepository.findById(Long.valueOf(id));
-        if (!post.isPresent()) {
-            throw new Exception("post not found");
-        }
-        return post;
+    public Post findById(Long id) throws Exception {
+        return postRepository.findById(id).orElseThrow(() -> new Exception("post not found"));
     }
 
     public List<PostDto> findAll() {
@@ -67,24 +61,42 @@ public class PostService {
     }
 
     public void editPost(String id, UpdatePostRequest data) throws Exception {
-        Optional<Post> post = postRepository.findById(Long.valueOf(id));
-        if (!post.isPresent()) {
-            throw new Exception("post not found");
-        }
-        Post existPost = post.get();
-        if (!existPost.getUser().getId().equals(data.getUserId())) {
+        Post post = postRepository.findById(Long.valueOf(id)).orElseThrow(() -> new Exception("post not found"));
+        Post existPost = post;
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!existPost.getUser().getId().equals(user.getId())) {
             throw new Exception("you don't have permisson to edit this post");
         }
         existPost.setContent(data.getContent());
-        existPost.setStatus(post.get().getStatus());
-        existPost.setImages(imageService.editImage(data.getImages(), post.get(), data.getRemoveImages()));
+        existPost.setStatus(post.getStatus());
+        existPost.setImages(imageService.editImage(data.getImages(), post, data.getRemoveImages()));
         if (existPost.getContent() == null && existPost.getImages().isEmpty()) {
             throw new Exception("cannot delete all content and image");
         }
         postRepository.save(existPost);
     }
 
+    public void like(Long postId) throws Exception {
+        User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userService.findById(me.getId());
+        Post post = findById(postId);
+        if (post.getLikedByUsers().contains(user)) {
+            post.getLikedByUsers().remove(user);
+            user.getLikePosts().remove(post);
+        } else {
+            post.getLikedByUsers().add(user);
+            user.getLikePosts().add(post);
+        }
+        userRepository.save(user);
+        postRepository.save(post);
+    }
+
     public void deletePostById(String id) {
         postRepository.deleteById(Long.valueOf(id));
     }
+
+    // public List<PostDto> getFriendPost(){
+    //     User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    //     userService.
+    // }
 }

@@ -24,41 +24,32 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JWTAuthFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
-
     @Autowired
     private UserService userService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("authorization");
         final String token;
         final String email;
         if (authHeader == null || authHeader.isBlank()) {
             filterChain.doFilter(request, response);
-            return ;
+            return;
         }
-
         token = authHeader.substring(7);
         email = jwtUtil.extractUsername(token);
-
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.loadUserByUsername(email);
-
             if (jwtUtil.isTokenValid(token, userDetails)) {
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                 UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null,
-                                userDetails.getAuthorities());
-
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 securityContext.setAuthentication(authToken);
                 SecurityContextHolder.setContext(securityContext);
             }
         }
-
         filterChain.doFilter(request, response);
     }
-
 }

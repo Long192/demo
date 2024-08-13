@@ -5,7 +5,6 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -71,7 +70,8 @@ public class AuthService {
 
     public LoginResponse login(GetTokenRequest request) {
         LoginResponse response = new LoginResponse();
-        Otp otp = otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(), Long.valueOf(request.getUserId()));
+        Otp otp = otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(),
+                Long.valueOf(request.getUserId()));
         if (otp != null && validateOtp(otp)) {
             User user = userRepository.findById(otp.getUser().getId()).orElseThrow();
             String jwt = jwtUtil.generateTokken(user);
@@ -88,44 +88,42 @@ public class AuthService {
         return response;
     }
 
-    public OtpDto loginOtp(LoginRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        Optional<User> user = userRepository.findByEmail(request.getEmail());
+    public OtpDto loginOtp(LoginRequest request) throws Exception {
+        authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new Exception("user not found"));
         OtpDto otpDto = new OtpDto();
-        if (user.isPresent()) {
-            Otp otp = new Otp();
-            otp.setOtp(AppUtils.generateOtp());
-            otp.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-            otp.setUser(user.get());
-            otpRepository.save(otp);
-            otpDto.setOtp(otp.getOtp());
-            otpDto.setUserId(otp.getUser().getId());
-        }
+        Otp otp = new Otp();
+        otp.setOtp(AppUtils.generateOtp());
+        otp.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
+        otp.setUser(user);
+        otpRepository.save(otp);
+        otpDto.setOtp(otp.getOtp());
+        otpDto.setUserId(otp.getUser().getId());
         return otpDto;
     }
 
-    public ForgotPasswordResponse forgotPassword(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
+    public ForgotPasswordResponse forgotPassword(String email) throws Exception {
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("user not found"));
         ForgotPasswordResponse urlResponse = new ForgotPasswordResponse();
-        if (user.isPresent() && user.get().getId() != null) {
-            String token = UUID.randomUUID().toString();
-            String url = environment.getProperty("spring.base-url") + "/auth/reset-password?userId=" + user.get().getId() + "&token=" + token;
-            ForgotPassword forgotPassword = new ForgotPassword();
-            forgotPassword.setUser(user.get());
-            forgotPassword.setToken(token);
-            forgotPassword.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-            forgotPasswordRepository.save(forgotPassword);
-            urlResponse.setUrl(url);
-        }
+        String token = UUID.randomUUID().toString();
+        String url = environment.getProperty("spring.base-url") + "/auth/reset-password?userId=" + user.getId()
+                + "&token=" + token;
+        ForgotPassword forgotPassword = new ForgotPassword();
+        forgotPassword.setUser(user);
+        forgotPassword.setToken(token);
+        forgotPassword.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
+        forgotPasswordRepository.save(forgotPassword);
+        urlResponse.setUrl(url);
         return urlResponse;
     }
 
-    public void resetPassword(String password, String id, String token) {
-        Optional<User> user = userRepository.findById(Long.valueOf(id));
+    public void resetPassword(String password, String id, String token) throws Exception {
+        User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new Exception("user not found"));
         ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
-        if (user.isPresent() && forgotPassword != null && validateResetPasswordToken(forgotPassword, token)) {
-            user.get().setPassword(passwordEncoder.encode(password));
-            userRepository.save(user.get());
+        if (forgotPassword != null && validateResetPasswordToken(forgotPassword, token)) {
+            user.setPassword(passwordEncoder.encode(password));
+            userRepository.save(user);
         }
     }
 
@@ -134,6 +132,7 @@ public class AuthService {
     }
 
     private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {
-        return !forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis())) || !forgotPassword.getToken().equals(token);
+        return !forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))
+                || !forgotPassword.getToken().equals(token);
     }
 }

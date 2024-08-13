@@ -10,7 +10,6 @@ import lombok.Data;
 
 @Data
 public class UpdatePostRequest {
-    private Long userId;
     private String content;
     private List<MultipartFile> images;
     private List<String> removeImages;

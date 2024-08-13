@@ -13,7 +13,7 @@ public class UploadCareConfig {
     private Environment env;
 
     @Bean
-    public Client uploadClient(){
+    public Client uploadClient() {
         return new Client(env.getProperty("uploadcare-public"), env.getProperty("uploadcare-secret"));
     }
 }

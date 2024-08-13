@@ -1,6 +1,5 @@
 package com.example.Enum;
 
 public enum StatusEnum {
-    active,
-    unactive
+    active, unactive
 }

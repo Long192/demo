@@ -24,18 +24,14 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne()
     @JoinColumn(name = "post_id", referencedColumnName = "id")
     private Post post;
-
     @Column(name = "url")
     private String url;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
-
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false, updatable = false)
     private Timestamp updatedAt;

@@ -18,9 +18,8 @@ public class RemoveExpiredSchedule {
     private ForgotPasswordRepository forgotPasswordRepository;
 
     @Scheduled(cron = "0 */5 * ? * *")
-    public void removeExpired(){
+    public void removeExpired() {
         otpRepository.deleteExPiredOtp();
         forgotPasswordRepository.deleteExpired();
     }
-
 }
