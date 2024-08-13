@@ -1,6 +1,7 @@
 package com.example.demo.Exception;
 
-import com.uploadcare.upload.UploadFailureException;
+import java.net.MalformedURLException;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,10 +11,9 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.demo.Dto.Response.ApiResponse;
+import com.uploadcare.upload.UploadFailureException;
 
 import io.jsonwebtoken.ExpiredJwtException;
-
-import java.net.MalformedURLException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler<T> {
@@ -42,8 +42,7 @@ public class GlobalExceptionHandler<T> {
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse<T>> handlingMethodArgumentNotValidException(
-            MethodArgumentNotValidException exception) {
+    ResponseEntity<ApiResponse<T>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
@@ -68,8 +67,7 @@ public class GlobalExceptionHandler<T> {
     }
 
     @ExceptionHandler(value = MalformedURLException.class)
-    ResponseEntity<ApiResponse<T>> handlingMalformedURLException(
-            MalformedURLException exception) {
+    ResponseEntity<ApiResponse<T>> handlingMalformedURLException(MalformedURLException exception) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getMessage());

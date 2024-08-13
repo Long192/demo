@@ -12,7 +12,7 @@ public class PostDto {
     private UserDto user;
     private String content;
     private StatusEnum status;
-    private List<FavouriteDto> favourites;
+    private List<UserDto> likedByUsers;
     private List<CommentDto> comments;
     private List<ImageDto> images;
     private String createdAt;

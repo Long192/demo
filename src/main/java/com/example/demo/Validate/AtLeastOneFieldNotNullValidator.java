@@ -7,8 +7,7 @@ import com.example.demo.Interface.AtLeastOneFieldNotNull;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class AtLeastOneFieldNotNullValidator
-        implements ConstraintValidator<AtLeastOneFieldNotNull, Object> {
+public class AtLeastOneFieldNotNullValidator implements ConstraintValidator<AtLeastOneFieldNotNull, Object> {
     private String[] fields;
 
     @Override
@@ -20,12 +19,10 @@ public class AtLeastOneFieldNotNullValidator
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
         BeanWrapperImpl beanWrapperImpl = new BeanWrapperImpl(value);
-
-        for (String field: fields){
+        for (String field : fields) {
             Object property = beanWrapperImpl.getPropertyValue(field);
             return property != null && !property.toString().trim().isEmpty();
         }
-
         return false;
     }
 }

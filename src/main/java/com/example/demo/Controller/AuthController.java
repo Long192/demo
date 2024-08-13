@@ -33,19 +33,21 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping(value = "/signup", consumes = { "multipart/form-data" })
-    public ApiResponse<MessageResponse> signupFormData(@ModelAttribute SignUpRequest request) throws MalformedURLException, UploadFailureException, ParseException {
+    public ApiResponse<MessageResponse> signupFormData(@ModelAttribute SignUpRequest request)
+            throws MalformedURLException, UploadFailureException, ParseException {
         authService.signUp(request);
         return ApiResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
-    
+
     @PostMapping(value = "/signup", consumes = { "application/json" })
-    public ApiResponse<MessageResponse> signupJson(@RequestBody SignUpRequest request) throws MalformedURLException, UploadFailureException, ParseException {
+    public ApiResponse<MessageResponse> signupJson(@RequestBody SignUpRequest request)
+            throws MalformedURLException, UploadFailureException, ParseException {
         authService.signUp(request);
         return ApiResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
 
     @PostMapping("/login")
-    public ApiResponse<OtpDto> loginOtp(@RequestBody LoginRequest request) {
+    public ApiResponse<OtpDto> loginOtp(@RequestBody LoginRequest request) throws Exception {
         return ApiResponse.<OtpDto> builder().data(authService.loginOtp(request)).build();
     }
 
@@ -55,12 +57,15 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ApiResponse<ForgotPasswordResponse> forgotPassword(@RequestBody @Valid ForgotPasswordRequest email) {
-        return ApiResponse.<ForgotPasswordResponse> builder().data(authService.forgotPassword(email.getEmail())).build();
+    public ApiResponse<ForgotPasswordResponse> forgotPassword(@RequestBody @Valid ForgotPasswordRequest email)
+            throws Exception {
+        return ApiResponse.<ForgotPasswordResponse> builder().data(authService.forgotPassword(email.getEmail()))
+                .build();
     }
 
     @PostMapping("/reset-password")
-    public ApiResponse<MessageResponse> password(@RequestBody ResetPasswordRequest request, @RequestParam String userId, @RequestParam String token) {
+    public ApiResponse<MessageResponse> password(@RequestBody ResetPasswordRequest request, @RequestParam String userId,
+            @RequestParam String token) throws Exception {
         authService.resetPassword(request.getPassword(), userId, token);
         return ApiResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }

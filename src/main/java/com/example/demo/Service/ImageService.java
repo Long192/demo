@@ -29,7 +29,8 @@ public class ImageService {
     @Autowired
     private ImageRepository imageRepository;
 
-    public List<Image> upload(List<MultipartFile> multiPartFiles, Post post) throws UploadFailureException, MalformedURLException {
+    public List<Image> upload(List<MultipartFile> multiPartFiles, Post post)
+            throws UploadFailureException, MalformedURLException {
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : multiPartFiles) {
             Image image = new Image();
@@ -51,7 +52,8 @@ public class ImageService {
         return url;
     }
 
-    public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls) throws MalformedURLException, UploadFailureException {
+    public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls)
+            throws MalformedURLException, UploadFailureException {
         List<Image> images = post.getImages();
         if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
             images.addAll(upload(files, post));

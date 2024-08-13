@@ -1,7 +1,9 @@
 package com.example.demo.Controller;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,12 +18,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
-import com.example.demo.Dto.Request.FavouriteRequest;
+import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.ApiResponse;
 import com.example.demo.Dto.Response.MessageResponse;
 import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Service.FavouriteService;
+import com.example.demo.Model.Post;
 import com.example.demo.Service.PostService;
 
 import jakarta.validation.Valid;
@@ -32,21 +34,29 @@ public class PostController {
     @Autowired
     private PostService postService;
     @Autowired
-    private FavouriteService favouriteService;
+    private ModelMapper modelMapper;
 
     @GetMapping("")
-    public ApiResponse<Page<PostDto>> getPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+    public ApiResponse<Page<PostDto>> getPosts(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.<Page<PostDto>> builder().data(postService.findAndPaginate(page, size)).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<PostDto> getPostById(@PathVariable String id) throws Exception {
-        return ApiResponse.<PostDto> builder().data(postService.findById(Long.valueOf(id))).build();
+        Post post = postService.findById(Long.valueOf(id));
+        return ApiResponse.<PostDto> builder().data(modelMapper.map(post, PostDto.class)).build();
     }
 
     @GetMapping("/get-all")
     public ApiResponse<List<PostDto>> getAll() {
         return ApiResponse.<List<PostDto>> builder().data(postService.findAll()).build();
+    }
+
+    @GetMapping("/get-friend-post")
+    public ApiResponse<List<PostDto>> getFriendPost(@RequestParam String param) {
+        
+        return ApiResponse.<List<PostDto>> builder().data(new ArrayList<PostDto>()).build();
     }
 
     @PostMapping(value = "", consumes = { "multipart/form-data" })
@@ -56,13 +66,14 @@ public class PostController {
     }
 
     @PostMapping("/like")
-    public ApiResponse<MessageResponse> likePost(@RequestBody FavouriteRequest entity) throws Exception {
-        favouriteService.like(entity);
+    public ApiResponse<MessageResponse> likePost(@RequestBody @Valid LikeRequest request) throws Exception {
+        postService.like(request.getPostId());
         return ApiResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
 
     @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
-    public ApiResponse<MessageResponse> editPost(@PathVariable String id, @ModelAttribute @Valid UpdatePostRequest entity) throws Exception {
+    public ApiResponse<MessageResponse> editPost(@PathVariable String id,
+            @ModelAttribute @Valid UpdatePostRequest entity) throws Exception {
         postService.editPost(id, entity);
         return ApiResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
