@@ -60,9 +60,6 @@ public class ImageService {
         }
         if (removeUrls != null && (!removeUrls.isEmpty())) {
             List<Image> removeImages = imageRepository.findAllByUrls(removeUrls);
-            // for(Image image: removeImages){
-            // client.getFile(image.getUrl().substring(20, 56)).delete();
-            // }
             images.removeAll(removeImages);
         }
         return images;

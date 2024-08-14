@@ -27,7 +27,7 @@ public class JwtUtil {
 
     public String generateTokken(UserDetails userDetails) {
         return Jwts.builder().subject(userDetails.getUsername()).issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration)).claim("user", userDetails).signWith(secretKey).compact();
+                .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey).compact();
     }
 
     public String extractUsername(String token) {

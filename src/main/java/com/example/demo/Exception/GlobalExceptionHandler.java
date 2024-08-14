@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.example.demo.Dto.Response.ApiResponse;
+import com.example.demo.Dto.Response.CustomResponse;
 import com.uploadcare.upload.UploadFailureException;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -18,65 +18,65 @@ import io.jsonwebtoken.ExpiredJwtException;
 @ControllerAdvice
 public class GlobalExceptionHandler<T> {
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse<T>> handlingException(Exception exception) {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingException(Exception exception) {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getMessage());
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(value = NoResourceFoundException.class)
-    ResponseEntity<ApiResponse<T>> handlingNoResourceFoundException() {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingNoResourceFoundException() {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(404);
         response.setMessage("not found");
         return ResponseEntity.status(404).body(response);
     }
 
     @ExceptionHandler(value = ExpiredJwtException.class)
-    ResponseEntity<ApiResponse<T>> handlingExpiredToken() {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingExpiredToken() {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(403);
         response.setMessage("token expired");
         return ResponseEntity.status(403).body(response);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse<T>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(value = HandlerMethodValidationException.class)
-    ResponseEntity<ApiResponse<T>> handlingHandlerMethodValidationException(
+    ResponseEntity<CustomResponse<T>> handlingHandlerMethodValidationException(
             HandlerMethodValidationException exception) {
-        ApiResponse<T> response = new ApiResponse<>();
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(value = UploadFailureException.class)
-    ResponseEntity<ApiResponse<T>> handlingUploadFailureException() {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingUploadFailureException() {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(401);
         response.setMessage("failed to upload image");
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(value = MalformedURLException.class)
-    ResponseEntity<ApiResponse<T>> handlingMalformedURLException(MalformedURLException exception) {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingMalformedURLException(MalformedURLException exception) {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getMessage());
         return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
-    ResponseEntity<ApiResponse<T>> handlingDataIntegrityViolationException() {
-        ApiResponse<T> response = new ApiResponse<>();
+    ResponseEntity<CustomResponse<T>> handlingDataIntegrityViolationException() {
+        CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage("entity already exists");
         return ResponseEntity.badRequest().body(response);

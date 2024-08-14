@@ -40,14 +40,22 @@ public class PostService {
         post.setUser(user);
         post.setStatus(StatusEnum.active);
         postRepository.save(post);
-        if (!request.getImages().getFirst().isEmpty()) {
+        if (request.getImages() != null && !request.getImages().getFirst().isEmpty()) {
             imageService.upload(request.getImages(), post);
         }
     }
 
     public Page<PostDto> findAndPaginate(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<Post> postPage = postRepository.findAllByStatus(StatusEnum.active, pageable);
+        return postPage.map(source -> modelMapper.map(source, PostDto.class));
+    }
+
+    public Page<PostDto> findMyPostsAndPaginate(int page, int size) throws Exception {
+        User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = userService.findById(me.getId());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Post> postPage = postRepository.getPostByUserId(user.getId(), pageable);
         return postPage.map(source -> modelMapper.map(source, PostDto.class));
     }
 
@@ -68,7 +76,7 @@ public class PostService {
             throw new Exception("you don't have permisson to edit this post");
         }
         existPost.setContent(data.getContent());
-        existPost.setStatus(post.getStatus());
+        existPost.setStatus(data.getStatus());
         existPost.setImages(imageService.editImage(data.getImages(), post, data.getRemoveImages()));
         if (existPost.getContent() == null && existPost.getImages().isEmpty()) {
             throw new Exception("cannot delete all content and image");
@@ -95,8 +103,4 @@ public class PostService {
         postRepository.deleteById(Long.valueOf(id));
     }
 
-    // public List<PostDto> getFriendPost(){
-    //     User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    //     userService.
-    // }
 }
