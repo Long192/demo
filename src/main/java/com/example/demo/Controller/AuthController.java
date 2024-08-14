@@ -3,6 +3,7 @@ package com.example.demo.Controller;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 
+import com.example.demo.Dto.Request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,11 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.Dto.Request.ForgotPasswordRequest;
-import com.example.demo.Dto.Request.GetTokenRequest;
-import com.example.demo.Dto.Request.LoginRequest;
-import com.example.demo.Dto.Request.ResetPasswordRequest;
-import com.example.demo.Dto.Request.SignUpRequest;
 import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
@@ -55,6 +51,11 @@ public class AuthController {
     @PostMapping("/login")
     public CustomResponse<OtpDto> loginOtp(@RequestBody LoginRequest request) throws Exception {
         return CustomResponse.<OtpDto> builder().data(authService.loginOtp(request)).build();
+    }
+
+    @PostMapping("/refresh")
+    public CustomResponse<LoginResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) throws Exception {
+        return CustomResponse.<LoginResponse>builder().data(authService.refreshToken(request.getRefreshToken())).build();
     }
 
     @Operation(summary = "token", description = "get token with otp and user id")

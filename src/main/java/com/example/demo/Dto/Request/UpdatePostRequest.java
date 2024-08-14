@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.StatusEnum;
 
 import lombok.Data;
 

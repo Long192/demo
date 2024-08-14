@@ -3,6 +3,7 @@ package com.example.demo.Utils;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.function.Function;
 
 import javax.crypto.SecretKey;
@@ -16,18 +17,25 @@ import io.jsonwebtoken.Jwts;
 
 @Component
 public class JwtUtil {
-    private String secret = "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b";
-    private Long expiration = (long) 3600000;
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
 
     public JwtUtil() {
+        String secret = "3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b";
         byte[] keyByte = Base64.getDecoder().decode(secret.getBytes(StandardCharsets.UTF_8));
         this.secretKey = new SecretKeySpec(keyByte, "HmacSHa256");
     }
 
-    public String generateTokken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails) {
+        long expiration = 3600000;
         return Jwts.builder().subject(userDetails.getUsername()).issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey).compact();
+    }
+
+    public String generateRefreshToken(HashMap<String, Object> claims, UserDetails userDetails) {
+        long expirationRefresh = 86400000;
+        return  Jwts.builder().claims(claims).subject(userDetails.getUsername())
+                    .issuedAt(new Date(System.currentTimeMillis() + expirationRefresh))
+                    .signWith(secretKey).compact();
     }
 
     public String extractUsername(String token) {

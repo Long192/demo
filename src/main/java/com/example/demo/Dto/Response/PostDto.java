@@ -2,7 +2,7 @@ package com.example.demo.Dto.Response;
 
 import java.util.List;
 
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.StatusEnum;
 
 import lombok.Data;
 

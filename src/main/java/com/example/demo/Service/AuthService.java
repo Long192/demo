@@ -5,9 +5,11 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,8 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.Enum.RoleEnum;
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.RoleEnum;
+import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
@@ -74,8 +76,10 @@ public class AuthService {
                 Long.valueOf(request.getUserId()));
         if (otp != null && validateOtp(otp)) {
             User user = userRepository.findById(otp.getUser().getId()).orElseThrow();
-            String jwt = jwtUtil.generateTokken(user);
+            String jwt = jwtUtil.generateToken(user);
+            String refresh = jwtUtil.generateRefreshToken(new HashMap<>(), user);
             response.setToken(jwt);
+            response.setRefreshToken(refresh);
             response.setId(user.getId());
             response.setAddress(user.getAddress());
             response.setDob(user.getDob() != null ? user.getDob().toString() : null);
@@ -125,6 +129,15 @@ public class AuthService {
             user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
         }
+    }
+
+    public LoginResponse refreshToken(String refreshToken) throws Exception {
+        LoginResponse response = new LoginResponse();
+        String email = jwtUtil.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("user not found"));
+        String token = jwtUtil.generateToken(user);
+        response.setRefreshToken(token);
+        return response;
     }
 
     private boolean validateOtp(Otp otp) {

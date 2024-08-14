@@ -9,6 +9,7 @@ import lombok.Data;
 public class LoginResponse {
     private Long id;
     private String token;
+    private String refreshToken;
     private String email;
     private String fullname;
     private String address;

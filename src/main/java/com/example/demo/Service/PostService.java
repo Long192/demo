@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;

@@ -6,11 +6,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.demo.Dto.Request.FriendRequest;
 import com.example.demo.Dto.Response.CustomResponse;
@@ -73,10 +69,10 @@ public class FriendController {
     }
 
     @Operation(summary = "delete friend", description = "delete a friend")
-    @PostMapping("/delete-friend")
-    public CustomResponse<MessageResponse> deleteFriend(@RequestBody @Valid FriendRequest request) throws Exception {
+    @DeleteMapping("/{id}")
+    public CustomResponse<MessageResponse> deleteFriend(@PathVariable String id) throws Exception {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        friendService.removeFriend(user.getId(), request.getFriendId());
+        friendService.removeFriend(user.getId(), Long.valueOf(id));
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
 }

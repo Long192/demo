@@ -2,7 +2,7 @@ package com.example.demo.Dto.Response;
 
 import java.util.List;
 
-import com.example.Enum.FriendStatusEnum;
+import com.example.demo.Enum.FriendStatusEnum;
 import com.example.demo.Model.User;
 
 import lombok.Data;

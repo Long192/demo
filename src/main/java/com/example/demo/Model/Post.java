@@ -6,7 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.StatusEnum;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

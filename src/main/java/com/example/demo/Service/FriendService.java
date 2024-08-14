@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.Enum.FriendStatusEnum;
-import com.example.Enum.StatusEnum;
+import com.example.demo.Enum.FriendStatusEnum;
+import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Model.Friend;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;

@@ -5,7 +5,7 @@ import java.sql.Timestamp;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.example.Enum.FriendStatusEnum;
+import com.example.demo.Enum.FriendStatusEnum;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
