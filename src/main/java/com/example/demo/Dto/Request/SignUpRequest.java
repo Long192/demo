@@ -23,7 +23,7 @@ public class SignUpRequest {
     @NotBlank(message = "email required")
     private String email;
     @NotBlank(message = "password required")
-    @Size(min = 6, message = "password need atleast 6 character")
+    @Size(min = 6, message = "password need at least 6 character")
     private String password;
     private String fullname;
     private MultipartFile avatar;

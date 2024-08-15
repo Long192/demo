@@ -19,5 +19,5 @@ public class MessageResponse {
     @Builder.Default
     private String message = "success";
     @Builder.Default
-    private Boolean stautus = true;
+    private Boolean status = true;
 }

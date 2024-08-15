@@ -38,7 +38,7 @@ public class AuthController {
 
     @Operation(summary = "signup", description = "sign up with email and password, use formdata if you want to upload avatar")
     @PostMapping(value = "/signup", consumes = { "multipart/form-data" })
-    public CustomResponse<MessageResponse> signupFormData(@ModelAttribute SignUpRequest request)
+    public CustomResponse<MessageResponse> signupFormData(@ModelAttribute @Valid SignUpRequest request)
             throws MalformedURLException, UploadFailureException, ParseException {
         authService.signUp(request);
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();
@@ -46,7 +46,7 @@ public class AuthController {
 
     @Operation(summary = "signup", description = "sign up with email and password, use formdata if you want to upload avatar")
     @PostMapping(value = "/signup", consumes = { "application/json" })
-    public CustomResponse<MessageResponse> signupJson(@RequestBody SignUpRequest request)
+    public CustomResponse<MessageResponse> signupJson(@RequestBody @Valid SignUpRequest request)
             throws MalformedURLException, UploadFailureException, ParseException {
         authService.signUp(request);
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();
