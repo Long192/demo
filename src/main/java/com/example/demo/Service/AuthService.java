@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,14 +17,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Enum.RoleEnum;
-import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
 import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.OtpDto;
+import com.example.demo.Enum.RoleEnum;
+import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Model.ForgotPassword;
 import com.example.demo.Model.Otp;
 import com.example.demo.Model.User;

@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
@@ -11,10 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
@@ -45,9 +46,13 @@ public class PostService {
         }
     }
 
-    public Page<PostDto> findAndPaginate(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.findAllByStatus(StatusEnum.active, pageable);
+    public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids,Timestamp timestamp, Pageable pageable){
+        Page<Post> posts = postRepository.findPostByUserIdsAndCreatedAt(ids, timestamp, pageable);
+        return posts.map(source -> modelMapper.map(source, PostDto.class));
+    }
+
+    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch ) {
+        Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
         return postPage.map(source -> modelMapper.map(source, PostDto.class));
     }
 

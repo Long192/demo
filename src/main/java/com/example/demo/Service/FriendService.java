@@ -6,13 +6,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.FriendStatusEnum;
-import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Model.Friend;
-import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.FriendRepository;
 
@@ -22,17 +24,17 @@ public class FriendService {
     private UserService userService;
     @Autowired
     private FriendRepository friendRepository;
+    @Autowired
+    private PostService postService;
 
-    public List<Post> getFriendPost() throws Exception {
-        List<Post> posts = new ArrayList<>();
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(7));
-        List<User> friends = getFriends();
-        for (User friend : friends) {
-            posts.addAll(friend.getPosts().stream().filter(
-                    post -> (post.getCreatedAt().before(timestamp) && post.getStatus().equals(StatusEnum.active)))
-                    .toList());
-        }
-        return posts;
+    public Page<PostDto> getFriendPost(Pageable pageable) throws Exception {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
+        List<Long> friendIds = new ArrayList<>();
+        getAllFriend().forEach(user ->{
+            friendIds.add(user.getId());
+        });
+        
+        return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
     }
 
     public void addFriend(Long userId, Long friendId) throws Exception {
@@ -63,16 +65,24 @@ public class FriendService {
         friendRepository.deleteFriend(userId, friendId);
     }
 
-    public List<User> getFriends() throws Exception {
+    public Page<User> getFriends(Pageable pageable, String search) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<Friend> friends = friendRepository.findFriends(userToken.getId());
+        Page<Friend> friends = friendRepository.findFriends(userToken.getId(), search ,pageable);
+        List<User> users = friendToUser(friends.getContent(), userToken.getId());
+        return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
+    }
+
+    private List<User> getAllFriend(){
+        User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
         return friendToUser(friends, userToken.getId());
     }
 
-    public List<User> getFriendRequests() throws Exception {
+    public Page<User> getFriendRequests(Pageable pageable) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<Friend> friends = friendRepository.findFriendRequests(userToken.getId());
-        return friendToUser(friends, userToken.getId());
+        Page<Friend> friends = friendRepository.findFriendRequests(userToken.getId(), pageable);
+        List<User> users = friendToUser(friends.getContent(), userToken.getId());
+        return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
     }
 
     private List<User> friendToUser(List<Friend> friends, Long id) {
@@ -89,6 +99,6 @@ public class FriendService {
 
     public List<Friend> getFriendRaw() {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return friendRepository.findFriends(user.getId());
+        return friendRepository.findAllFriends(user.getId());
     }
 }

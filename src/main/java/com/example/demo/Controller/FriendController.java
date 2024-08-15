@@ -5,8 +5,18 @@ import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.FriendRequest;
 import com.example.demo.Dto.Response.CustomResponse;
@@ -31,16 +41,30 @@ public class FriendController {
 
     @Operation(summary = "get friend", description = "get a list of friends based on the token of the currently logged in user")
     @GetMapping("")
-    public CustomResponse<List<UserDto>> getFriend() throws Exception {
-        List<UserDto> friendList = mapper.map(friendService.getFriends(), new TypeToken<List<UserDto>>() {}.getType());
+    public CustomResponse<List<UserDto>> getFriend(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "") String search,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") String order
+    ) throws Exception {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+        List<UserDto> friendList = mapper.map(friendService.getFriends(pageable, search), new TypeToken<List<UserDto>>() {}.getType());
         return CustomResponse.<List<UserDto>> builder().data(friendList).build();
     }
 
     @Operation(summary = "get friend post", description = "get a list of friends' posts from 1 week ago to the present")
     @GetMapping("/friend-posts")
-    public CustomResponse<List<PostDto>> getFriendPost() throws Exception {
-        List<PostDto> posts = mapper.map(friendService.getFriendPost(), new TypeToken<List<PostDto>>() {}.getType());
-        return CustomResponse.<List<PostDto>> builder().data(posts).build();
+    public CustomResponse<Page<PostDto>> getFriendPost(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") String order
+    ) throws Exception {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+        return CustomResponse.<Page<PostDto>> builder().data(friendService.getFriendPost(pageable)).build();
     }
 
     @Operation(summary = "add new friend", description = "add a new friend")
@@ -53,9 +77,16 @@ public class FriendController {
 
     @Operation(summary = "list friend request", description = "list all friend request you received from other user")
     @GetMapping("/friend-request")
-    public CustomResponse<List<UserDto>> getFriendRequest() throws Exception {
+    public CustomResponse<List<UserDto>> getFriendRequest(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") String order
+    ) throws Exception {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
         List<UserDto> friendList =
-                mapper.map(friendService.getFriendRequests(), new TypeToken<List<UserDto>>() {}.getType());
+                mapper.map(friendService.getFriendRequests(pageRequest), new TypeToken<List<UserDto>>() {}.getType());
         return CustomResponse.<List<UserDto>> builder().data(friendList).build();
     }
 

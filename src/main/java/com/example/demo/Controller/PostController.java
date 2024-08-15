@@ -5,6 +5,8 @@ import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -40,9 +42,16 @@ public class PostController {
 
     @Operation(summary = "get posts", description = "get all paginated posts")
     @GetMapping("")
-    public CustomResponse<Page<PostDto>> getPosts(@RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return CustomResponse.<Page<PostDto>> builder().data(postService.findAndPaginate(page, size)).build();
+    public CustomResponse<Page<PostDto>> getPosts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "") String search,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") String order
+    ) {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
+        return CustomResponse.<Page<PostDto>> builder().data(postService.findAndPaginate(pageable, search)).build();
     }
 
     @Operation(summary = "get my post", description = "get all post of the currently logged in user")
