@@ -34,7 +34,8 @@ public class JwtUtil {
     public String generateRefreshToken(HashMap<String, Object> claims, UserDetails userDetails) {
         long expirationRefresh = 86400000;
         return  Jwts.builder().claims(claims).subject(userDetails.getUsername())
-                    .issuedAt(new Date(System.currentTimeMillis() + expirationRefresh))
+                    .issuedAt(new Date(System.currentTimeMillis()))
+                    .expiration(new Date(System.currentTimeMillis() + expirationRefresh))
                     .signWith(secretKey).compact();
     }
 

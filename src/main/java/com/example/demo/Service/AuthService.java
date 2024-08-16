@@ -1,9 +1,7 @@
 package com.example.demo.Service;
 
-import java.net.MalformedURLException;
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.UUID;
@@ -33,7 +31,6 @@ import com.example.demo.Repository.OtpRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
-import com.uploadcare.upload.UploadFailureException;
 
 @Service
 public class AuthService {
@@ -54,7 +51,7 @@ public class AuthService {
     @Autowired
     private Environment environment;
 
-    public void signUp(SignUpRequest request) throws MalformedURLException, UploadFailureException, ParseException {
+    public void signUp(SignUpRequest request) throws Exception {
         User user = new User();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
         user.setEmail(request.getEmail());
@@ -73,27 +70,31 @@ public class AuthService {
         LoginResponse response = new LoginResponse();
         Otp otp = otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(),
                 Long.valueOf(request.getUserId()));
-        if (otp != null && validateOtp(otp)) {
-            User user = userRepository.findById(otp.getUser().getId()).orElseThrow();
-            String jwt = jwtUtil.generateToken(user);
-            String refresh = jwtUtil.generateRefreshToken(new HashMap<>(), user);
-            response.setToken(jwt);
-            response.setRefreshToken(refresh);
-            response.setId(user.getId());
-            response.setAddress(user.getAddress());
-            response.setDob(user.getDob() != null ? user.getDob().toString() : null);
-            response.setEmail(user.getEmail());
-            response.setFullname(user.getFullname());
-            otpRepository.deleteById(otp.getId());
-        } else {
+        if (otp == null || !validateOtp(otp)) {
             throw new BadCredentialsException("otp or user invalid");
         }
+
+        User user = userRepository.findById(otp.getUser().getId()).orElseThrow();
+        String jwt = jwtUtil.generateToken(user);
+        String refresh = jwtUtil.generateRefreshToken(new HashMap<>(), user);
+        response.setToken(jwt);
+        response.setRefreshToken(refresh);
+        response.setId(user.getId());
+        response.setAddress(user.getAddress());
+        response.setDob(user.getDob() != null ? user.getDob().toString() : null);
+        response.setEmail(user.getEmail());
+        response.setFullname(user.getFullname());
+        otpRepository.deleteById(otp.getId());
+
         return response;
     }
 
     public OtpDto loginOtp(LoginRequest request) throws Exception {
-        authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        try{
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        }catch(Exception e){
+            throw e;
+        }
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new Exception("user not found"));
         OtpDto otpDto = new OtpDto();
         Otp otp = new Otp();
@@ -135,7 +136,7 @@ public class AuthService {
         String email = jwtUtil.extractUsername(refreshToken);
         User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("user not found"));
         String token = jwtUtil.generateToken(user);
-        response.setRefreshToken(token);
+        response.setToken(token);
         return response;
     }
 

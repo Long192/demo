@@ -1,8 +1,5 @@
 package com.example.demo.Controller;
 
-import java.net.MalformedURLException;
-import java.text.ParseException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,7 +20,6 @@ import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.MessageResponse;
 import com.example.demo.Dto.Response.OtpDto;
 import com.example.demo.Service.AuthService;
-import com.uploadcare.upload.UploadFailureException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +35,7 @@ public class AuthController {
     @Operation(summary = "signup", description = "sign up with email and password, use formdata if you want to upload avatar")
     @PostMapping(value = "/signup", consumes = { "multipart/form-data" })
     public CustomResponse<MessageResponse> signupFormData(@ModelAttribute @Valid SignUpRequest request)
-            throws MalformedURLException, UploadFailureException, ParseException {
+            throws Exception {
         authService.signUp(request);
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
@@ -47,14 +43,14 @@ public class AuthController {
     @Operation(summary = "signup", description = "sign up with email and password, use formdata if you want to upload avatar")
     @PostMapping(value = "/signup", consumes = { "application/json" })
     public CustomResponse<MessageResponse> signupJson(@RequestBody @Valid SignUpRequest request)
-            throws MalformedURLException, UploadFailureException, ParseException {
+            throws Exception {
         authService.signUp(request);
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();
     }
 
     @Operation(summary = "login", description = "login with email and password to get login otp")
     @PostMapping("/login")
-    public CustomResponse<OtpDto> loginOtp(@RequestBody LoginRequest request) throws Exception {
+    public CustomResponse<OtpDto> loginOtp(@RequestBody @Valid LoginRequest request) throws Exception {
         return CustomResponse.<OtpDto> builder().data(authService.loginOtp(request)).build();
     }
 
@@ -66,7 +62,7 @@ public class AuthController {
 
     @Operation(summary = "token", description = "get token with otp and user id")
     @PostMapping("/token")
-    public CustomResponse<LoginResponse> getToken(@RequestBody GetTokenRequest entity) {
+    public CustomResponse<LoginResponse> getToken(@RequestBody @Valid GetTokenRequest entity) {
         return CustomResponse.<LoginResponse> builder().data(authService.login(entity)).build();
     }
 
@@ -80,7 +76,7 @@ public class AuthController {
 
     @Operation(summary = "reset password", description = "reset password with url get form forgot password request")
     @PostMapping("/reset-password")
-    public CustomResponse<MessageResponse> password(@RequestBody ResetPasswordRequest request,
+    public CustomResponse<MessageResponse> password(@RequestBody @Valid ResetPasswordRequest request,
             @RequestParam String userId, @RequestParam String token) throws Exception {
         authService.resetPassword(request.getPassword(), userId, token);
         return CustomResponse.<MessageResponse> builder().data(new MessageResponse()).build();

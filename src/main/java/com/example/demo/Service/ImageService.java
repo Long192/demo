@@ -1,12 +1,14 @@
 package com.example.demo.Service;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,6 @@ import com.example.demo.Model.Post;
 import com.example.demo.Repository.ImageRepository;
 import com.uploadcare.api.Client;
 import com.uploadcare.upload.FileUploader;
-import com.uploadcare.upload.UploadFailureException;
 import com.uploadcare.upload.Uploader;
 import com.uploadcare.urls.CdnPathBuilder;
 import com.uploadcare.urls.Urls;
@@ -30,7 +31,7 @@ public class ImageService {
     private ImageRepository imageRepository;
 
     public List<Image> upload(List<MultipartFile> multiPartFiles, Post post)
-            throws UploadFailureException, MalformedURLException {
+            throws Exception {
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : multiPartFiles) {
             Image image = new Image();
@@ -42,7 +43,11 @@ public class ImageService {
         return images;
     }
 
-    public String uploadAndGetUrl(MultipartFile multiPartFiles) throws UploadFailureException, MalformedURLException {
+    public String uploadAndGetUrl(MultipartFile multiPartFiles) throws Exception {
+        BufferedImage image = ImageIO.read(convertToFile(multiPartFiles));
+        if(image == null){
+            throw new Exception("not image");
+        }
         Uploader uploader = new FileUploader(client, convertToFile(multiPartFiles));
         com.uploadcare.api.File uploadedFile = uploader.upload();
         String fileId = uploadedFile.getFileId();
@@ -53,7 +58,7 @@ public class ImageService {
     }
 
     public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls)
-            throws MalformedURLException, UploadFailureException {
+            throws Exception {
         List<Image> images = post.getImages();
         if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
             images.addAll(upload(files, post));

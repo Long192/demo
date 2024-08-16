@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class SignUpRequest {
     @Email(message = "wrong email format")
     @NotBlank(message = "email required")
     private String email;
-    @NotBlank(message = "password required")
+    @NotNull(message = "password required")
     @Size(min = 6, message = "password need at least 6 character")
     private String password;
     private String fullname;

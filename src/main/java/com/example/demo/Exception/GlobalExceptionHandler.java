@@ -14,6 +14,7 @@ import com.example.demo.Dto.Response.CustomResponse;
 import com.uploadcare.upload.UploadFailureException;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler<T> {
@@ -79,6 +80,14 @@ public class GlobalExceptionHandler<T> {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage("entity already exists");
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(value = SignatureException.class)
+    ResponseEntity<CustomResponse<T>> handlingSignatureException() {
+        CustomResponse<T> response = new CustomResponse<>();
+        response.setStatus(400);
+        response.setMessage("signature error");
         return ResponseEntity.badRequest().body(response);
     }
 }
