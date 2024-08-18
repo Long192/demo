@@ -1,20 +1,5 @@
 package com.example.demo.Service;
 
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
@@ -31,6 +16,20 @@ import com.example.demo.Repository.OtpRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -68,8 +67,9 @@ public class AuthService {
 
     public LoginResponse login(GetTokenRequest request) {
         LoginResponse response = new LoginResponse();
-        Otp otp = otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(),
-                Long.valueOf(request.getUserId()));
+        Otp otp =
+            otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(), request.getUserId());
+
         if (otp == null || !validateOtp(otp)) {
             throw new BadCredentialsException("otp or user invalid");
         }
@@ -90,11 +90,7 @@ public class AuthService {
     }
 
     public OtpDto loginOtp(LoginRequest request) throws Exception {
-        try{
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        }catch(Exception e){
-            throw e;
-        }
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new Exception("user not found"));
         OtpDto otpDto = new OtpDto();
         Otp otp = new Otp();
@@ -112,7 +108,7 @@ public class AuthService {
         ForgotPasswordResponse urlResponse = new ForgotPasswordResponse();
         String token = UUID.randomUUID().toString();
         String url = environment.getProperty("spring.base-url") + "/auth/reset-password?userId=" + user.getId()
-                + "&token=" + token;
+            + "&token=" + token;
         ForgotPassword forgotPassword = new ForgotPassword();
         forgotPassword.setUser(user);
         forgotPassword.setToken(token);
@@ -125,10 +121,12 @@ public class AuthService {
     public void resetPassword(String password, String id, String token) throws Exception {
         User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new Exception("user not found"));
         ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
-        if (forgotPassword != null && validateResetPasswordToken(forgotPassword, token)) {
-            user.setPassword(passwordEncoder.encode(password));
-            userRepository.save(user);
-        }
+        if (forgotPassword == null)
+            throw new Exception("reset password request not found");
+        if (validateResetPasswordToken(forgotPassword, token))
+            throw new Exception("reset password request expired");
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
     }
 
     public LoginResponse refreshToken(String refreshToken) throws Exception {
@@ -146,6 +144,6 @@ public class AuthService {
 
     private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {
         return !forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))
-                || !forgotPassword.getToken().equals(token);
+            || !forgotPassword.getToken().equals(token);
     }
 }

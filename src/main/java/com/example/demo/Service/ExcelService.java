@@ -1,8 +1,8 @@
 package com.example.demo.Service;
 
-import java.sql.Timestamp;
-import java.util.concurrent.TimeUnit;
-
+import com.example.demo.Model.User;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
@@ -13,10 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Model.User;
-
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
+import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ExcelService {
@@ -64,11 +62,11 @@ public class ExcelService {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
         int postCount = user.getPosts().stream().filter(post -> post.getCreatedAt().after(timestamp)).toList().size();
         int commentCount =
-                user.getComments().stream().filter(comment -> comment.getCreatedAt().after(timestamp)).toList().size();
+            user.getComments().stream().filter(comment -> comment.getCreatedAt().after(timestamp)).toList().size();
         int likeCount = favouriteService.findFavouriteByUserId(me.getId()).stream()
-                .filter(like -> like.getCreatedAt().after(timestamp)).toList().size();
+            .filter(like -> like.getCreatedAt().after(timestamp)).toList().size();
         int friendCount = friendService.getFriendRaw().stream().filter(friend -> friend.getCreatedAt().after(timestamp))
-                .toList().size();
+            .toList().size();
         createCell(row, 0, postCount, style);
         createCell(row, 1, friendCount, style);
         createCell(row, 2, likeCount, style);

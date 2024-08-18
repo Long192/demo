@@ -1,19 +1,17 @@
 package com.example.demo.Utils;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.function.Function;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 
 @Component
 public class JwtUtil {
@@ -28,15 +26,15 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         long expiration = 3600000;
         return Jwts.builder().subject(userDetails.getUsername()).issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey).compact();
+            .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey).compact();
     }
 
     public String generateRefreshToken(HashMap<String, Object> claims, UserDetails userDetails) {
         long expirationRefresh = 86400000;
-        return  Jwts.builder().claims(claims).subject(userDetails.getUsername())
-                    .issuedAt(new Date(System.currentTimeMillis()))
-                    .expiration(new Date(System.currentTimeMillis() + expirationRefresh))
-                    .signWith(secretKey).compact();
+        return Jwts.builder().claims(claims).subject(userDetails.getUsername())
+            .issuedAt(new Date(System.currentTimeMillis()))
+            .expiration(new Date(System.currentTimeMillis() + expirationRefresh))
+            .signWith(secretKey).compact();
     }
 
     public String extractUsername(String token) {

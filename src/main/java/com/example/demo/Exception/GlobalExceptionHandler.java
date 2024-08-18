@@ -1,7 +1,9 @@
 package com.example.demo.Exception;
 
-import java.net.MalformedURLException;
-
+import com.example.demo.Dto.Response.CustomResponse;
+import com.uploadcare.upload.UploadFailureException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,11 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.example.demo.Dto.Response.CustomResponse;
-import com.uploadcare.upload.UploadFailureException;
-
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.security.SignatureException;
+import java.net.MalformedURLException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler<T> {
@@ -52,7 +50,7 @@ public class GlobalExceptionHandler<T> {
 
     @ExceptionHandler(value = HandlerMethodValidationException.class)
     ResponseEntity<CustomResponse<T>> handlingHandlerMethodValidationException(
-            HandlerMethodValidationException exception) {
+        HandlerMethodValidationException exception) {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
@@ -88,6 +86,14 @@ public class GlobalExceptionHandler<T> {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage("signature error");
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(value = NumberFormatException.class)
+    ResponseEntity<CustomResponse<T>> handlingNumberFormatException() {
+        CustomResponse<T> response = new CustomResponse<>();
+        response.setStatus(400);
+        response.setMessage("number format error");
         return ResponseEntity.badRequest().body(response);
     }
 }

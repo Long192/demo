@@ -15,6 +15,7 @@ public class GetTokenRequest {
     @Size(min = 4, max = 4, message = "otp only have 4 character")
     @NotNull(message = "otp required")
     private String otp;
+
     @NotNull(message = "userId required")
     private Long UserId;
 }

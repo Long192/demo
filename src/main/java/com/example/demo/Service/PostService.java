@@ -1,8 +1,13 @@
 package com.example.demo.Service;
 
-import java.sql.Timestamp;
-import java.util.List;
-
+import com.example.demo.Dto.Request.CreatePostRequest;
+import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Model.Post;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.PostRepository;
+import com.example.demo.Repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +17,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Dto.Request.CreatePostRequest;
-import com.example.demo.Dto.Request.UpdatePostRequest;
-import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Enum.StatusEnum;
-import com.example.demo.Model.Post;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.PostRepository;
-import com.example.demo.Repository.UserRepository;
+import java.sql.Timestamp;
+import java.util.List;
 
 @Service
 public class PostService {
@@ -46,12 +45,12 @@ public class PostService {
         }
     }
 
-    public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids,Timestamp timestamp, Pageable pageable){
+    public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids, Timestamp timestamp, Pageable pageable) {
         Page<Post> posts = postRepository.findPostByUserIdsAndCreatedAt(ids, timestamp, pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
 
-    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch ) {
+    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch) {
         Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
         return postPage.map(source -> modelMapper.map(source, PostDto.class));
     }
@@ -70,23 +69,23 @@ public class PostService {
 
     public List<PostDto> findAll() {
         List<Post> posts = postRepository.findAll();
-        return modelMapper.map(posts, new TypeToken<List<PostDto>>() {}.getType());
+        return modelMapper.map(posts, new TypeToken<List<PostDto>>() {
+        }.getType());
     }
 
-    public void editPost(String id, UpdatePostRequest data) throws Exception {
-        Post post = postRepository.findById(Long.valueOf(id)).orElseThrow(() -> new Exception("post not found"));
-        Post existPost = post;
+    public void editPost(Long id, UpdatePostRequest data) throws Exception {
+        Post post = postRepository.findById(id).orElseThrow(() -> new Exception("post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!existPost.getUser().getId().equals(user.getId())) {
+        if (!post.getUser().getId().equals(user.getId())) {
             throw new Exception("you don't have permisson to edit this post");
         }
-        existPost.setContent(data.getContent());
-        existPost.setStatus(data.getStatus());
-        existPost.setImages(imageService.editImage(data.getImages(), post, data.getRemoveImages()));
-        if (existPost.getContent() == null && existPost.getImages().isEmpty()) {
+        post.setContent(data.getContent());
+        post.setStatus(data.getStatus());
+        post.setImages(imageService.editImage(data.getImages(), post, data.getRemoveImages()));
+        if (post.getContent() == null && post.getImages().isEmpty()) {
             throw new Exception("cannot delete all content and image");
         }
-        postRepository.save(existPost);
+        postRepository.save(post);
     }
 
     public void like(Long postId) throws Exception {
@@ -104,8 +103,8 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public void deletePostById(String id) {
-        postRepository.deleteById(Long.valueOf(id));
+    public void deletePostById(Long id) {
+        postRepository.deleteById(id);
     }
 
 }

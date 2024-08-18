@@ -1,11 +1,9 @@
 package com.example.demo.Validate;
 
-import org.springframework.beans.BeanWrapperImpl;
-
-import com.example.demo.Interface.AtLeastOneFieldNotNull;
-
+import com.example.demo.Validate.Anotations.AtLeastOneFieldNotNull;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.BeanWrapperImpl;
 
 public class AtLeastOneFieldNotNullValidator implements ConstraintValidator<AtLeastOneFieldNotNull, Object> {
     private String[] fields;

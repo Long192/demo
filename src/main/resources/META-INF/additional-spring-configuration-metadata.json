@@ -1,27 +1,29 @@
-{"properties": [
-  {
-    "name": "spring.security.secret",
-    "type": "java.lang.String",
-    "description": "A description for 'spring.security.secret'"
-  },
-  {
-    "name": "spring.security.expired",
-    "type": "java.lang.String",
-    "description": "A description for 'spring.security.expired'"
-  },
-  {
-    "name": "base-url",
-    "type": "java.lang.String",
-    "description": "A description for 'base-url'"
-  },
-  {
-    "name": "uploadcare-secret",
-    "type": "java.lang.String",
-    "description": "A description for 'uploadcare-secret'"
-  },
-  {
-    "name": "uploadcare-public",
-    "type": "java.lang.String",
-    "description": "A description for 'uploadcare-public'"
-  }
-]}
+{
+  "properties": [
+    {
+      "name": "spring.security.secret",
+      "type": "java.lang.String",
+      "description": "A description for 'spring.security.secret'"
+    },
+    {
+      "name": "spring.security.expired",
+      "type": "java.lang.String",
+      "description": "A description for 'spring.security.expired'"
+    },
+    {
+      "name": "base-url",
+      "type": "java.lang.String",
+      "description": "A description for 'base-url'"
+    },
+    {
+      "name": "uploadcare-secret",
+      "type": "java.lang.String",
+      "description": "A description for 'uploadcare-secret'"
+    },
+    {
+      "name": "uploadcare-public",
+      "type": "java.lang.String",
+      "description": "A description for 'uploadcare-public'"
+    }
+  ]
+}

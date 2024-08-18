@@ -1,17 +1,12 @@
-package com.example.demo.Interface;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.example.demo.Validate.Anotations;
 
 import com.example.demo.Validate.AtLeastOneFieldNotNullValidator;
-
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
-@Target({ ElementType.TYPE, ElementType.ANNOTATION_TYPE })
+import java.lang.annotation.*;
+
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = AtLeastOneFieldNotNullValidator.class)
 @Documented

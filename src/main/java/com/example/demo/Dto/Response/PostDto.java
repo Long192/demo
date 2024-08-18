@@ -1,10 +1,9 @@
 package com.example.demo.Dto.Response;
 
-import java.util.List;
-
 import com.example.demo.Enum.StatusEnum;
-
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class PostDto {

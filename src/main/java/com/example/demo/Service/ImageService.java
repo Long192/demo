@@ -1,19 +1,5 @@
 package com.example.demo.Service;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import javax.imageio.ImageIO;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
 import com.example.demo.Repository.ImageRepository;
@@ -22,6 +8,18 @@ import com.uploadcare.upload.FileUploader;
 import com.uploadcare.upload.Uploader;
 import com.uploadcare.urls.CdnPathBuilder;
 import com.uploadcare.urls.Urls;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ImageService {
@@ -30,8 +28,20 @@ public class ImageService {
     @Autowired
     private ImageRepository imageRepository;
 
+//    public void upload(List<MultipartFile> multiPartFiles, Post post)
+//        throws Exception {
+//        List<Image> images = new ArrayList<>();
+//        for (MultipartFile file : multiPartFiles) {
+//            Image image = new Image();
+//            image.setPost(post);
+//            image.setUrl(uploadAndGetUrl(file));
+//            images.add(image);
+//        }
+//        imageRepository.saveAll(images);
+//    }
+
     public List<Image> upload(List<MultipartFile> multiPartFiles, Post post)
-            throws Exception {
+        throws Exception {
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : multiPartFiles) {
             Image image = new Image();
@@ -40,25 +50,38 @@ public class ImageService {
             images.add(image);
         }
         imageRepository.saveAll(images);
+
         return images;
     }
 
     public String uploadAndGetUrl(MultipartFile multiPartFiles) throws Exception {
         BufferedImage image = ImageIO.read(convertToFile(multiPartFiles));
-        if(image == null){
-            throw new Exception("not image");
+        if (image == null) {
+            throw new Exception("invalid image");
         }
         Uploader uploader = new FileUploader(client, convertToFile(multiPartFiles));
         com.uploadcare.api.File uploadedFile = uploader.upload();
         String fileId = uploadedFile.getFileId();
         com.uploadcare.api.File fileResponse = client.getFile(fileId);
         CdnPathBuilder builder = fileResponse.cdnPath();
-        String url = Urls.cdn(builder).toURL().toString();
-        return url;
+        return Urls.cdn(builder).toURL().toString();
     }
 
+//    public List<Image> editImage(List<Object> files, Post post, List<String> removeUrls)
+//        throws Exception {
+//        List<Image> images = post.getImages();
+//        if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
+//            images.addAll(upload(files, post));
+//        }
+//        if (removeUrls != null && (!removeUrls.isEmpty())) {
+//            List<Image> removeImages = imageRepository.findAllByUrls(removeUrls);
+//            images.removeAll(removeImages);
+//        }
+//        return images;
+//    }
+
     public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls)
-            throws Exception {
+        throws Exception {
         List<Image> images = post.getImages();
         if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
             images.addAll(upload(files, post));
@@ -70,9 +93,22 @@ public class ImageService {
         return images;
     }
 
-    public void removeImage(List<Image> removeImages) {
-        imageRepository.deleteAll(removeImages);
-    }
+//    public List<Image> editImage(List<Object> files, Post post)
+//        throws Exception {
+//        List<Image> images = new ArrayList<>();
+//        for (Object file : files) {
+//            if(file instanceof String){
+//                images.add(imageRepository.findAllByUrl((String)file));
+//                continue;
+//            }
+//
+//            if(file instanceof MultipartFile){
+//                Image image = Image.builder().url(uploadAndGetUrl((MultipartFile)file)).post(post).build();
+//                images.add(image);
+//            }
+//        }
+//        return images;
+//    }
 
     private File convertToFile(MultipartFile multiPartFile) {
         File file = new File(Objects.requireNonNull(multiPartFile.getOriginalFilename()));

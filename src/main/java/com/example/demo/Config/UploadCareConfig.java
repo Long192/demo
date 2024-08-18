@@ -1,11 +1,10 @@
 package com.example.demo.Config;
 
+import com.uploadcare.api.Client;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-
-import com.uploadcare.api.Client;
 
 @Configuration
 public class UploadCareConfig {

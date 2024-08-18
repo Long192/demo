@@ -1,10 +1,10 @@
 package com.example.demo.Service;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.FriendStatusEnum;
+import com.example.demo.Model.Friend;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.FriendRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -12,11 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Enum.FriendStatusEnum;
-import com.example.demo.Model.Friend;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.FriendRepository;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FriendService {
@@ -30,10 +29,10 @@ public class FriendService {
     public Page<PostDto> getFriendPost(Pageable pageable) throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
         List<Long> friendIds = new ArrayList<>();
-        getAllFriend().forEach(user ->{
+        getAllFriend().forEach(user -> {
             friendIds.add(user.getId());
         });
-        
+
         return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
     }
 
@@ -67,12 +66,12 @@ public class FriendService {
 
     public Page<User> getFriends(Pageable pageable, String search) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Page<Friend> friends = friendRepository.findFriends(userToken.getId(), search ,pageable);
+        Page<Friend> friends = friendRepository.findFriends(userToken.getId(), search, pageable);
         List<User> users = friendToUser(friends.getContent(), userToken.getId());
         return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
     }
 
-    private List<User> getAllFriend(){
+    private List<User> getAllFriend() {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
         return friendToUser(friends, userToken.getId());

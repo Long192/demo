@@ -1,9 +1,6 @@
 package com.example.demo.Dto.Request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -12,28 +9,27 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-@Data
 @Builder
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SignUpRequest {
-    @Email(message = "wrong email format")
-    @NotBlank(message = "email required")
-    private String email;
-
-    @NotNull(message = "password required")
+@NoArgsConstructor
+public class UpdateUserRequest {
     @Size(min = 6, message = "password need at least 6 character")
     private String password;
 
+    @NotNull(message = "fullname required")
     private String fullname;
 
-    private MultipartFile avatar;
+    @NotNull(message = "image required")
+    private Object avatar;
 
+    @NotNull(message = "address required")
     private String address;
 
+    @NotNull(message = "etc required")
     private String etc;
 
     @JsonFormat(pattern = "yyyy/MM/dd")
+    @NotNull(message = "dob required")
     private String dob;
 }
