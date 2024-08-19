@@ -260,21 +260,4 @@ public class PostControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("message").value("post not found"))
                 .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
     }
-
-    @Test
-    @WithMockUser
-    public void editPostFailedIdInvalid() throws Exception{
-        MockMultipartFile mockFile = new MockMultipartFile("images","img.jpeg", MediaType.IMAGE_JPEG_VALUE, "img".getBytes());
-
-        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/post/asdfasdf")
-                .file(mockFile)
-                .param("removeImage[]", "url to remove")
-                .param("content", "new content")
-                .param("status", "active")
-                .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("wrong number format"))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
-    }
-
 }

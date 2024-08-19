@@ -17,6 +17,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -37,38 +41,36 @@ public class CommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @InjectMocks
+    private CommentController commentController;
+
     @MockBean
     private CommentService commentService;
 
-    @InjectMocks
-    private PostController postController;
-
-    @Mock
+    @MockBean
     private PostService postService;
 
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        mockMvc = MockMvcBuilders.standaloneSetup(postController).build();
-
-        User mockUser = User.builder().email("test@test.com").password("password").build();
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-    }
+//    @BeforeEach
+//    public void setUp() {
+//        mockMvc = MockMvcBuilders.standaloneSetup(commentController).build();
+//        UserDetails mockUser = User.builder().id(1L).email("test@test.com").password("password").build();
+//        Authentication authentication = mock(Authentication.class);
+//        when(authentication.getPrincipal()).thenReturn(mockUser);
+//        SecurityContext securityContext = mock(SecurityContext.class);
+//        when(securityContext.getAuthentication()).thenReturn(authentication);
+//        SecurityContextHolder.setContext(securityContext);
+//    }
 
     private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
     }
 
     @Test
+    @WithMockUser
     public void addCommentSuccess() throws Exception {
         AddCommentRequest req = AddCommentRequest.builder().content("comment 1").postId(1L).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/post").content(asJsonString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/comment").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
@@ -77,6 +79,19 @@ public class CommentControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"))
                 .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true));
     }
-    // @Test
-    // public void addCommentFailedEmty
+
+    @Test
+    @WithMockUser
+    public void addCommentFailedEmpty() throws Exception {
+        AddCommentRequest req = AddCommentRequest.builder().content("").postId(1L).build();
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/comment")
+                .content(asJsonString(req))
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.jsonPath("message").value("content required"))
+                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+    }
+
 }
