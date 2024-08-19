@@ -1,13 +1,14 @@
 package com.example.demo.Service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
 import com.example.demo.Dto.Request.AddCommentRequest;
 import com.example.demo.Dto.Request.UpdateCommentRequest;
 import com.example.demo.Model.Comment;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.CommentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
 
 @Service
 public class CommentService {

@@ -1,25 +1,35 @@
 package com.example.demo.Controller;
 
-import com.example.demo.Dto.Request.CreatePostRequest;
-import com.example.demo.Dto.Request.LikeRequest;
-import com.example.demo.Dto.Request.UpdatePostRequest;
-import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.MessageResponse;
-import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Model.Post;
-import com.example.demo.Service.PostService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.example.demo.Dto.Request.CreatePostRequest;
+import com.example.demo.Dto.Request.LikeRequest;
+import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.CustomResponse;
+import com.example.demo.Dto.Response.MessageResponse;
+import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.OrderEnum;
+import com.example.demo.Model.Post;
+import com.example.demo.Service.PostService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @Tag(name = "post", description = "post")
 @RestController
@@ -37,9 +47,9 @@ public class PostController {
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search,
         @RequestParam(defaultValue = "id") String sortBy,
-        @RequestParam(defaultValue = "asc") String order
-    ) {
-        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        @RequestParam(defaultValue = "asc") OrderEnum order
+    ) throws Exception {
+        Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(
             CustomResponse.<Page<PostDto>>builder().data(postService.findAndPaginate(pageable, search)).build()
@@ -50,10 +60,15 @@ public class PostController {
     @GetMapping("/my-posts")
     public ResponseEntity<CustomResponse<Page<PostDto>>> getMyPosts(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "") String search,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") OrderEnum order
     ) throws Exception {
+        Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
+        PageRequest pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(
-            CustomResponse.<Page<PostDto>>builder().data(postService.findMyPostsAndPaginate(page, size)).build()
+            CustomResponse.<Page<PostDto>>builder().data(postService.findMyPostsAndPaginate(pageable, search)).build()
         );
     }
 
@@ -62,12 +77,6 @@ public class PostController {
     public ResponseEntity<CustomResponse<PostDto>> getPostById(@PathVariable String id) throws Exception {
         Post post = postService.findById(Long.valueOf(id));
         return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(modelMapper.map(post, PostDto.class)).build());
-    }
-
-    @Operation(summary = "get all post", description = "get all post without paginate")
-    @GetMapping("/all")
-    public ResponseEntity<CustomResponse<List<PostDto>>> getAll() {
-        return ResponseEntity.ok(CustomResponse.<List<PostDto>>builder().data(postService.findAll()).build());
     }
 
     @Operation(summary = "add new post", description = "add a new post, use formdata if you want to upload file")

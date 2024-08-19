@@ -1,13 +1,15 @@
 package com.example.demo.Dto.Request;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 @Builder
 @Data
@@ -20,8 +22,7 @@ public class UpdateUserRequest {
     @NotNull(message = "fullname required")
     private String fullname;
 
-    @NotNull(message = "image required")
-    private Object avatar;
+    private MultipartFile avatar;
 
     @NotNull(message = "address required")
     private String address;

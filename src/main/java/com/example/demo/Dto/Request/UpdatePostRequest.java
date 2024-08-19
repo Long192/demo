@@ -1,13 +1,21 @@
 package com.example.demo.Dto.Request;
 
-import com.example.demo.Enum.StatusEnum;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.demo.Enum.StatusEnum;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class UpdatePostRequest {
     @NotNull(message = "content required")
     private String content;
@@ -19,6 +27,6 @@ public class UpdatePostRequest {
 //    @NotNull(message = "image required")
 //    private List<Object> images;
 
-    @NotNull(message = "content required")
+    @NotNull(message = "status required")
     private StatusEnum status;
 }

@@ -1,28 +1,36 @@
 package com.example.demo.Controller;
 
-import com.example.demo.Dto.Request.*;
-import com.example.demo.Dto.Response.ForgotPasswordResponse;
-import com.example.demo.Dto.Response.LoginResponse;
-import com.example.demo.Dto.Response.OtpDto;
-import com.example.demo.Service.AuthService;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.JwtException;
-import lombok.extern.slf4j.Slf4j;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.demo.Dto.Request.ForgotPasswordRequest;
+import com.example.demo.Dto.Request.GetTokenRequest;
+import com.example.demo.Dto.Request.LoginRequest;
+import com.example.demo.Dto.Request.RefreshTokenRequest;
+import com.example.demo.Dto.Request.ResetPasswordRequest;
+import com.example.demo.Dto.Request.SignUpRequest;
+import com.example.demo.Dto.Response.ForgotPasswordResponse;
+import com.example.demo.Dto.Response.LoginResponse;
+import com.example.demo.Dto.Response.OtpDto;
+import com.example.demo.Service.AuthService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.jsonwebtoken.JwtException;
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,7 +42,7 @@ public class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
-    private static String asJsoString(final Object obj) throws Exception {
+    private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
     }
 
@@ -42,7 +50,7 @@ public class AuthControllerTest {
     public void signUpTestOnlyUserAndPasswordSuccess() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("javatest@javatest.com").password("testpassword").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
             .andDo(MockMvcResultHandlers.print())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
@@ -56,7 +64,7 @@ public class AuthControllerTest {
     public void SignupWithWrongEmailFormat() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("java test").password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -68,7 +76,7 @@ public class AuthControllerTest {
     public void SignupWithEmailEmpty() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("").password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -80,7 +88,7 @@ public class AuthControllerTest {
     public void SignupWithEmailNull() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email(null).password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -92,7 +100,7 @@ public class AuthControllerTest {
     public void SignupWithPasswordEmpty() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -104,7 +112,7 @@ public class AuthControllerTest {
     public void SignupWithPasswordNull() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -112,36 +120,37 @@ public class AuthControllerTest {
             .andExpect((MockMvcResultMatchers.jsonPath("message").value("password required")));
     }
 
-    // @Test
-    // public void SignupWithAvatar() throws Exception {
-    //     MockMultipartFile mockImg = new MockMultipartFile(
-    //             "data",
-    //             "img.jpeg",
-    //             MediaType.IMAGE_JPEG_VALUE,
-    //             "image".getBytes()
-    //     );
+    @Test
+    public void SignupWithAvatar() throws Exception {
+        MockMultipartFile mockImg = new MockMultipartFile(
+                "avatar",
+                "img.jpeg",
+                MediaType.MULTIPART_FORM_DATA_VALUE,
+                "image".getBytes()
+        );
 
-    //     SignUpRequest req = SignUpRequest.builder()
-    //         .email("email@email.com")
-    //         .password("password")
-    //         .build();
+        SignUpRequest req = SignUpRequest.builder()
+            .email("email@email.com")
+            .password("password")
+            .avatar(mockImg)
+            .build();
 
-    //     mockMvc.perform(MockMvcRequestBuilders.multipart("/auth/signup").file(mockImg)
-    //         .param("email", req.getEmail())
-    //         .param("password", req.getPassword())
-    //         .flashAttr("request", req)
-    //         .contentType(MediaType.MULTIPART_FORM_DATA)
-    //         .accept(MediaType.MULTIPART_FORM_DATA))
-    //         .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-    //         .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-    //         .andExpect(MockMvcResultMatchers.jsonPath("data").exists());
-    // }
+        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST,"/auth/signup")
+            .file(mockImg)
+            .param("email", req.getEmail())
+            .param("password", req.getPassword())
+            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
+            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
+            .andExpect(MockMvcResultMatchers.jsonPath("data").exists());
+    }
 
     @Test
     public void SignupWithPasswordLessthanMinimum() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password("sdfdf").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andDo(MockMvcResultHandlers.print())
             .andExpect(status().isBadRequest())
@@ -157,7 +166,7 @@ public class AuthControllerTest {
 
         when(authService.loginOtp(request)).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsoString(request))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(request))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
             .andDo(MockMvcResultHandlers.print())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
@@ -173,7 +182,7 @@ public class AuthControllerTest {
 
         when(authService.loginOtp(req)).thenThrow(new Exception("user not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
@@ -184,7 +193,7 @@ public class AuthControllerTest {
     public void LoginTestFailedWrongEmailFormat() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email").password("test").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("wrong email format"))
@@ -195,7 +204,7 @@ public class AuthControllerTest {
     public void LoginTestFailedEmailEmpty() throws Exception {
         LoginRequest req = LoginRequest.builder().email("").password("test").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("email required"))
@@ -206,7 +215,7 @@ public class AuthControllerTest {
     public void LoginTestFailedPasswordEmpty() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email@email.com").password("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
             .andExpect(status().isBadRequest())
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("password required"))
@@ -217,7 +226,7 @@ public class AuthControllerTest {
     public void GetJwtTokenSuccess() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("3421").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
@@ -230,7 +239,7 @@ public class AuthControllerTest {
 
         when(authService.login(req)).thenThrow(new BadCredentialsException("otp or user invalid"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp or user invalid"))
@@ -241,7 +250,7 @@ public class AuthControllerTest {
     public void GetJwtTokenFailedOtpSize() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("34213").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp only have 4 character"))
@@ -252,7 +261,7 @@ public class AuthControllerTest {
     public void GetJwtTokenFailedOtpNull() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp required"))
@@ -263,7 +272,7 @@ public class AuthControllerTest {
     public void GetJwtTokenFailedUserIdNull() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(null).otp("3423").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("userId required"))
@@ -278,7 +287,7 @@ public class AuthControllerTest {
 
         when(authService.refreshToken(req.getRefreshToken())).thenReturn(res);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
@@ -292,7 +301,7 @@ public class AuthControllerTest {
 
         when(authService.refreshToken(req.getRefreshToken())).thenThrow(new JwtException("jwt token error"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("jwt token error"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
@@ -302,7 +311,7 @@ public class AuthControllerTest {
     public void refreshTokenFailureTokenNull() throws Exception {
         RefreshTokenRequest req = RefreshTokenRequest.builder().refreshToken(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("refreshToken required"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
@@ -312,7 +321,7 @@ public class AuthControllerTest {
     public void refreshTokenFailureTokenBlank() throws Exception {
         RefreshTokenRequest req = RefreshTokenRequest.builder().refreshToken("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("refreshToken required"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
@@ -326,7 +335,7 @@ public class AuthControllerTest {
 
         when(authService.forgotPassword(req.getEmail())).thenReturn(res);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
@@ -338,7 +347,7 @@ public class AuthControllerTest {
     public void forgotPasswordFailedEmailWrongFormat() throws Exception {
         ForgotPasswordRequest req = ForgotPasswordRequest.builder().email("email").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("wrong email format"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
@@ -350,7 +359,7 @@ public class AuthControllerTest {
 
         when(authService.forgotPassword(req.getEmail())).thenThrow(new Exception("user not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
             .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
@@ -360,7 +369,7 @@ public class AuthControllerTest {
     public void resetPasswordSuccess() throws Exception {
         ResetPasswordRequest req = ResetPasswordRequest.builder().password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
@@ -374,7 +383,7 @@ public class AuthControllerTest {
         doThrow(new Exception("user not found"))
             .when(authService).resetPassword(req.getPassword(), "1", "token");
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
@@ -387,7 +396,7 @@ public class AuthControllerTest {
 
         doThrow(new NumberFormatException()).when(authService).resetPassword(req.getPassword(), "1", "token");
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsoString(req))
+        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
             .andExpect(MockMvcResultMatchers.jsonPath("message").value("number format error"))

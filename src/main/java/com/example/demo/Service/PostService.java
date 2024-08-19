@@ -1,5 +1,16 @@
 package com.example.demo.Service;
 
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
@@ -8,17 +19,6 @@ import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
 import com.example.demo.Repository.UserRepository;
-import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-
-import java.sql.Timestamp;
-import java.util.List;
 
 @Service
 public class PostService {
@@ -50,27 +50,28 @@ public class PostService {
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
 
-    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch) {
-        Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
-        return postPage.map(source -> modelMapper.map(source, PostDto.class));
+    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch) throws Exception {
+        try{
+            Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
+            return postPage.map(source -> modelMapper.map(source, PostDto.class));
+        }catch (InvalidDataAccessApiUsageException e){
+            throw new Exception("cannot find attribute " + pageable.getSort());
+        }
     }
 
-    public Page<PostDto> findMyPostsAndPaginate(int page, int size) throws Exception {
+    public Page<PostDto> findMyPostsAndPaginate(Pageable pageable, String search) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.getPostByUserId(user.getId(), pageable);
-        return postPage.map(source -> modelMapper.map(source, PostDto.class));
+        try{
+            Page<Post> postPage = postRepository.getPostByUserIdAndSearch(user.getId(), pageable, search);
+            return postPage.map(source -> modelMapper.map(source, PostDto.class));
+        }catch(InvalidDataAccessApiUsageException e){
+            throw new Exception("cannot find attribute " + pageable.getSort());
+        }
     }
 
     public Post findById(Long id) throws Exception {
         return postRepository.findById(id).orElseThrow(() -> new Exception("post not found"));
-    }
-
-    public List<PostDto> findAll() {
-        List<Post> posts = postRepository.findAll();
-        return modelMapper.map(posts, new TypeToken<List<PostDto>>() {
-        }.getType());
     }
 
     public void editPost(Long id, UpdatePostRequest data) throws Exception {

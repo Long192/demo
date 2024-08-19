@@ -1,20 +1,20 @@
 package com.example.demo.Repository;
 
-import com.example.demo.Enum.StatusEnum;
-import com.example.demo.Model.Post;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.sql.Timestamp;
-import java.util.List;
+import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Model.Post;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-    Page<Post> getPostByUserId(Long id, Pageable page);
-
-    Page<Post> findAllByStatus(StatusEnum status, Pageable page);
+    @Query("SELECT p FROM Post p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :textSearch, '%')) AND p.user.id = :id")
+    Page<Post> getPostByUserIdAndSearch(@Param("id") Long id, Pageable page, @Param("textSearch") String textSearch);
 
     @Query("SELECT p FROM Post p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :textSearch, '%')) AND p.status = :status")
     Page<Post> findPostWithSearchAndSort(

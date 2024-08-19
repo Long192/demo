@@ -1,8 +1,9 @@
 package com.example.demo.Service;
 
-import com.example.demo.Dto.Request.UpdateUserRequest;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.UserRepository;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,11 +11,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.util.List;
+import com.example.demo.Dto.Request.UpdateUserRequest;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.UserRepository;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -47,20 +47,27 @@ public class UserService implements UserDetailsService {
             userInfo.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 
-        if(req.getDob() != null && !req.getDob().isEmpty()){
+        if(req.getDob() != null && !req.getDob().isBlank()){
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
             userInfo.setDob(new Date(sdf.parse(req.getDob()).getTime()));
         }
 
-        if(req.getAvatar() instanceof MultipartFile){
-            userInfo.setAvatar(imageService.uploadAndGetUrl((MultipartFile) req.getAvatar()));
-        }else if(req.getAvatar() instanceof String){
-            userInfo.setAvatar(req.getAvatar().toString())  ;
+        if(req.getAvatar() != null && !req.getAvatar().isEmpty()){
+            userInfo.setAvatar(imageService.uploadAndGetUrl(req.getAvatar()));
         }
 
-        userInfo.setFullname(req.getFullname());
-        userInfo.setEtc(req.getEtc());
-        userInfo.setAddress(req.getAddress());
+        if(req.getFullname() != null && !req.getFullname().isBlank()){
+            userInfo.setFullname(req.getFullname());
+        }
+
+        if(req.getEtc() != null && !req.getEtc().isBlank()){
+            userInfo.setEtc(req.getEtc());
+        }
+
+        if(req.getAddress() != null && !req.getAddress().isBlank()){
+            userInfo.setAddress(req.getAddress());
+        }
+   
         userRepository.save(userInfo);
     }
 }
