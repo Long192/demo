@@ -1,8 +1,7 @@
 package com.example.demo.Repository;
 
-import com.example.demo.Model.Friend;
-import com.example.demo.Model.User;
-import jakarta.transaction.Transactional;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.demo.Model.Friend;
+
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface FriendRepository extends JpaRepository<Friend, Long> {
@@ -46,8 +47,8 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     void deleteFriend(@Param("userId") Long userId, @Param("friendId") Long friendId);
 
     @Query(
-        "SELECT f FROM Friend f WHERE (f.friendReceiver = :user AND f.friendRequester = :friend)" +
-        " OR (f.friendReceiver = :friend AND f.friendRequester = :user)"
+        "SELECT f FROM Friend f WHERE (f.friendReceiver.id = :user AND f.friendRequester.id = :friend)" +
+        " OR (f.friendReceiver.id = :friend AND f.friendRequester.id = :user)"
     )
-    Friend findByFriendRequesterAndFriendReceiver(User user, User friend);
+    Friend findByFriendRequesterAndFriendReceiver(Long user, Long friend);
 }

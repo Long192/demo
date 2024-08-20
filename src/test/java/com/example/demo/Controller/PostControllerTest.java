@@ -2,11 +2,11 @@ package com.example.demo.Controller;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Arrays;
 
-import org.hibernate.query.sqm.UnknownPathException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,8 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.LikeRequest;
@@ -66,26 +64,26 @@ public class PostControllerTest {
     public void getPaginatePostSuccess() throws Exception {
         Page<PostDto> pagePost = new PageImpl<>(Arrays.asList(post1, post2, post3));
         when(postService.findAndPaginate(any(Pageable.class), anyString())).thenReturn(pagePost);
-        mockMvc.perform(MockMvcRequestBuilders.get("/post").param("page", "0").param("size", "10").param("search", "")
+        mockMvc.perform(get("/post").param("page", "0").param("size", "10").param("search", "")
                 .param("sortBy", "id").param("order", "asc").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[0].content").value("content1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[1].content").value("content2"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[2].content").value("content3"));
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.content[0].content").value("content1"))
+                .andExpect(jsonPath("data.content[1].content").value("content2"))
+                .andExpect(jsonPath("data.content[2].content").value("content3"));
     }
 
     @Test
     @WithMockUser
     public void getPaginatePostFailedWrongSortBy() throws Exception {
         when(postService.findAndPaginate(any(Pageable.class), anyString()))
-                .thenThrow(new UnknownPathException("cannot find attribute"));
-        mockMvc.perform(MockMvcRequestBuilders.get("/post").param("page", "0").param("size", "10").param("search", "")
+                .thenThrow(new Exception("cannot find attribute"));
+        mockMvc.perform(get("/post").param("page", "0").param("size", "10").param("search", "")
                 .param("sortBy", "safasdfasdf").param("order", "asc")).andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("cannot find attribute"));
+                .andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("cannot find attribute"));
     }
 
     @Test
@@ -93,14 +91,14 @@ public class PostControllerTest {
     public void getMyPostsSuccess() throws Exception {
         Page<PostDto> response = new PageImpl<>(Arrays.asList(post1, post2, post3));
         when(postService.findMyPostsAndPaginate(any(Pageable.class), anyString())).thenReturn(response);
-        mockMvc.perform(MockMvcRequestBuilders.get("/post/my-posts").param("page", "0").param("size", "10")
+        mockMvc.perform(get("/post/my-posts").param("page", "0").param("size", "10")
                 .param("search", "").param("sortBy", "id").param("order", "asc")).andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[0].content").value("content1"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[1].content").value("content2"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content[2].content").value("content3"));
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.content[0].content").value("content1"))
+                .andExpect(jsonPath("data.content[1].content").value("content2"))
+                .andExpect(jsonPath("data.content[2].content").value("content3"));
     }
 
     @Test
@@ -108,10 +106,10 @@ public class PostControllerTest {
     public void getMyPostsFailedWrongSortBy() throws Exception {
         when(postService.findMyPostsAndPaginate(any(Pageable.class), anyString()))
                 .thenThrow(new InvalidDataAccessApiUsageException("cannot find attribute"));
-        mockMvc.perform(MockMvcRequestBuilders.get("/post/my-posts").param("page", "0").param("size", "10")
+        mockMvc.perform(get("/post/my-posts").param("page", "0").param("size", "10")
                 .param("search", "").param("sortBy", "asdfasdf").param("order", "asc"))
-                .andExpect(status().isBadRequest()).andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("cannot find attribute"));
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("cannot find attribute"));
     }
 
     @Test
@@ -119,28 +117,28 @@ public class PostControllerTest {
     public void getPostByIdSuccess() throws Exception {
         Post post = Post.builder().content("content1").build();
         when(postService.findById(anyLong())).thenReturn(post);
-        mockMvc.perform(MockMvcRequestBuilders.get("/post/1")).andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.content").value("content1"));
+        mockMvc.perform(get("/post/1")).andExpect(status().isOk())
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.content").value("content1"));
     }
 
     @Test
     @WithMockUser
     public void getPostByIdFailedIdInvalid() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/post/asdasdfasdf")).andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("number format error"));
+        mockMvc.perform(get("/post/asdasdfasdf")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("number format error"));
     }
 
     @Test
     @WithMockUser
     public void getPostByIdFailedPostNotFound() throws Exception {
         when(postService.findById(anyLong())).thenThrow(new Exception("post not found"));
-        mockMvc.perform(MockMvcRequestBuilders.get("/post/5")).andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("post not found"))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+        mockMvc.perform(get("/post/5")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("post not found"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
@@ -148,12 +146,12 @@ public class PostControllerTest {
     public void createPostSuccess() throws Exception {
         CreatePostRequest req = CreatePostRequest.builder().content("content test").build();
         mockMvc.perform(
-                MockMvcRequestBuilders.post("/post").contentType(MediaType.APPLICATION_JSON).content(asJsonString(req)))
-                .andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"));
+                post("/post").contentType(MediaType.APPLICATION_JSON).content(asJsonString(req)))
+                .andExpect(status().isOk()).andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.status").value(true))
+                .andExpect(jsonPath("data.message").value("success"));
     }
 
     @Test
@@ -161,9 +159,9 @@ public class PostControllerTest {
     public void createPostFailedEmtyContentAndImage() throws Exception {
         CreatePostRequest req = new CreatePostRequest();
         mockMvc.perform(
-                MockMvcRequestBuilders.post("/post").contentType(MediaType.APPLICATION_JSON).content(asJsonString(req)))
-                .andExpect(status().isBadRequest()).andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("content or image required"));
+                post("/post").contentType(MediaType.APPLICATION_JSON).content(asJsonString(req)))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("content or image required"));
     }
 
     @Test
@@ -175,22 +173,22 @@ public class PostControllerTest {
                 new MockMultipartFile("images", "img.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
         MockMultipartFile mockFile3 =
                 new MockMultipartFile("images", "img.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
-        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST, "/post").file(mockFile1).file(mockFile2)
+        mockMvc.perform(multipart(HttpMethod.POST, "/post").file(mockFile1).file(mockFile2)
                 .file(mockFile3).param("content", "test content").contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true));
+                .andExpect(status().isOk()).andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.message").value("success"))
+                .andExpect(jsonPath("data.status").value(true));
     }
 
     @Test
     @WithMockUser
     public void createPostFailedWithFormDataReqEmpty() throws Exception {
         mockMvc.perform(
-                MockMvcRequestBuilders.multipart(HttpMethod.POST, "/post").contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest()).andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("content or image required"));
+                multipart(HttpMethod.POST, "/post").contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("content or image required"));
     }
 
     @Test
@@ -199,14 +197,14 @@ public class PostControllerTest {
 
         LikeRequest req = LikeRequest.builder().postId(1L).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/post/like").content(asJsonString(req))
+        mockMvc.perform(post("/post/like").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true));
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.message").value("success"))
+                .andExpect(jsonPath("data.status").value(true));
     }
 
     @Test
@@ -217,11 +215,11 @@ public class PostControllerTest {
 
         doThrow(new Exception("post not found")).when(postService).like(req.getPostId());
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/post/like").content(asJsonString(req))
+        mockMvc.perform(post("/post/like").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("post not found"));
+                .andExpect(jsonPath("status").value(400))
+                .andExpect(jsonPath("message").value("post not found"));
     }
 
     @Test
@@ -229,18 +227,18 @@ public class PostControllerTest {
     public void editPostSuccess() throws Exception{
         MockMultipartFile mockFile = new MockMultipartFile("images","img.jpeg", MediaType.IMAGE_JPEG_VALUE, "img".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/post/1")
+        mockMvc.perform(multipart(HttpMethod.PUT, "/post/1")
                 .file(mockFile)
                 .param("removeImage[]", "url to remove")
                 .param("content", "new content")
                 .param("status", "active")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-                .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-                .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"))
-                .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true));
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.message").value("success"))
+                .andExpect(jsonPath("data.status").value(true));
     }
 
     @Test
@@ -250,14 +248,14 @@ public class PostControllerTest {
 
         doThrow(new Exception("post not found")).when(postService).editPost(anyLong(), any(UpdatePostRequest.class));
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/post/1")
+        mockMvc.perform(multipart(HttpMethod.PUT, "/post/1")
                 .file(mockFile)
                 .param("removeImage[]", "url to remove")
                 .param("content", "new content")
                 .param("status", "active")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isBadRequest())
-                .andExpect(MockMvcResultMatchers.jsonPath("message").value("post not found"))
-                .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("post not found"))
+                .andExpect(jsonPath("status").value(400));
     }
 }

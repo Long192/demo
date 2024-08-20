@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.junit.jupiter.api.Test;
@@ -13,9 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import com.example.demo.Dto.Request.ForgotPasswordRequest;
 import com.example.demo.Dto.Request.GetTokenRequest;
@@ -50,74 +48,69 @@ public class AuthControllerTest {
     public void signUpTestOnlyUserAndPasswordSuccess() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("javatest@javatest.com").password("testpassword").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
-                .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value("200"))
-            .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-            .andExpect(MockMvcResultMatchers.jsonPath("data.message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("data.status").value(true));
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
+                .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value("200"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.message").value("success"))
+                .andExpect(jsonPath("data.status").value(true));
     }
 
     @Test
     public void SignupWithWrongEmailFormat() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("java test").password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("wrong email format")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("wrong email format")));
     }
 
     @Test
     public void SignupWithEmailEmpty() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("").password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("email required")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("email required")));
     }
 
     @Test
     public void SignupWithEmailNull() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email(null).password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("email required")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("email required")));
     }
 
     @Test
     public void SignupWithPasswordEmpty() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("password need at least 6 character")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("password need at least 6 character")));
     }
 
     @Test
     public void SignupWithPasswordNull() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("password required")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("password required")));
     }
 
     @Test
@@ -135,27 +128,26 @@ public class AuthControllerTest {
             .avatar(mockImg)
             .build();
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart(HttpMethod.POST,"/auth/signup")
+        mockMvc.perform(multipart(HttpMethod.POST,"/auth/signup")
             .file(mockImg)
             .param("email", req.getEmail())
             .param("password", req.getPassword())
             .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-            .andExpect(MockMvcResultMatchers.jsonPath("data").exists());
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("message").value("success"))
+            .andExpect(jsonPath("status").value(200))
+            .andExpect(jsonPath("data").exists());
     }
 
     @Test
     public void SignupWithPasswordLessthanMinimum() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password("sdfdf").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/signup").content(asJsonString(req))
+        mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400))
-            .andExpect((MockMvcResultMatchers.jsonPath("message").value("password need at least 6 character")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("status").value(400))
+                .andExpect((jsonPath("message").value("password need at least 6 character")));
     }
 
     @Test
@@ -166,14 +158,14 @@ public class AuthControllerTest {
 
         when(authService.loginOtp(request)).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(request))
-                .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value("200"))
-            .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-            .andExpect(MockMvcResultMatchers.jsonPath("data.otp").value(response.getOtp()))
-            .andExpect(MockMvcResultMatchers.jsonPath("data.userId").value(response.getUserId()));
+        mockMvc.perform(post("/auth/login").content(asJsonString(request))
+                .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value("200"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.otp").value(response.getOtp()))
+                .andExpect(jsonPath("data.userId").value(response.getUserId()));
     }
 
     @Test
@@ -182,55 +174,55 @@ public class AuthControllerTest {
 
         when(authService.loginOtp(req)).thenThrow(new Exception("user not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
+        mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("user not found"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void LoginTestFailedWrongEmailFormat() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email").password("test").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
+        mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("wrong email format"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("wrong email format"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void LoginTestFailedEmailEmpty() throws Exception {
         LoginRequest req = LoginRequest.builder().email("").password("test").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
+        mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("email required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("email required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void LoginTestFailedPasswordEmpty() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email@email.com").password("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/login").content(asJsonString(req))
+        mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isBadRequest())
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("password required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("password required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void GetJwtTokenSuccess() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("3421").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
+        mockMvc.perform(post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200));
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200));
     }
 
     @Test
@@ -239,44 +231,44 @@ public class AuthControllerTest {
 
         when(authService.login(req)).thenThrow(new BadCredentialsException("otp or user invalid"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
+        mockMvc.perform(post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp or user invalid"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("otp or user invalid"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void GetJwtTokenFailedOtpSize() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("34213").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
+        mockMvc.perform(post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp only have 4 character"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("otp only have 4 character"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void GetJwtTokenFailedOtpNull() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
+        mockMvc.perform(post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("otp required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("otp required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void GetJwtTokenFailedUserIdNull() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(null).otp("3423").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/token").content(asJsonString(req))
+        mockMvc.perform(post("/auth/token").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("userId required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("userId required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
@@ -287,12 +279,12 @@ public class AuthControllerTest {
 
         when(authService.refreshToken(req.getRefreshToken())).thenReturn(res);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
+        mockMvc.perform(post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-            .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-            .andExpect(MockMvcResultMatchers.jsonPath("data.token").value(res.getToken()));
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.token").value(res.getToken()));
     }
 
     @Test
@@ -301,30 +293,30 @@ public class AuthControllerTest {
 
         when(authService.refreshToken(req.getRefreshToken())).thenThrow(new JwtException("jwt token error"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
+        mockMvc.perform(post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("jwt token error"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("jwt token error"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void refreshTokenFailureTokenNull() throws Exception {
         RefreshTokenRequest req = RefreshTokenRequest.builder().refreshToken(null).build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
+        mockMvc.perform(post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("refreshToken required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("refreshToken required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void refreshTokenFailureTokenBlank() throws Exception {
         RefreshTokenRequest req = RefreshTokenRequest.builder().refreshToken("").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/refresh").content(asJsonString(req))
+        mockMvc.perform(post("/auth/refresh").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("refreshToken required"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("refreshToken required"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
@@ -335,22 +327,22 @@ public class AuthControllerTest {
 
         when(authService.forgotPassword(req.getEmail())).thenReturn(res);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200))
-            .andExpect(MockMvcResultMatchers.jsonPath("data").exists())
-            .andExpect(MockMvcResultMatchers.jsonPath("data.url").value(res.getUrl()));
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.url").value(res.getUrl()));
     }
 
     @Test
     public void forgotPasswordFailedEmailWrongFormat() throws Exception {
         ForgotPasswordRequest req = ForgotPasswordRequest.builder().email("email").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("wrong email format"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("wrong email format"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
@@ -359,21 +351,21 @@ public class AuthControllerTest {
 
         when(authService.forgotPassword(req.getEmail())).thenThrow(new Exception("user not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/forgot-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/forgot-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("user not found"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
     public void resetPasswordSuccess() throws Exception {
         ResetPasswordRequest req = ResetPasswordRequest.builder().password("password").build();
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("success"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(200));
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200));
     }
 
     @Test
@@ -381,13 +373,13 @@ public class AuthControllerTest {
         ResetPasswordRequest req = ResetPasswordRequest.builder().password("password").build();
 
         doThrow(new Exception("user not found"))
-            .when(authService).resetPassword(req.getPassword(), "1", "token");
+                .when(authService).resetPassword(req.getPassword(), "1", "token");
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("user not found"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("user not found"))
+                .andExpect(jsonPath("status").value(400));
     }
 
     @Test
@@ -396,10 +388,10 @@ public class AuthControllerTest {
 
         doThrow(new NumberFormatException()).when(authService).resetPassword(req.getPassword(), "1", "token");
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/auth/reset-password").content(asJsonString(req))
+        mockMvc.perform(post("/auth/reset-password").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .queryParam("userId", "1").queryParam("token", "token"))
-            .andExpect(MockMvcResultMatchers.jsonPath("message").value("number format error"))
-            .andExpect(MockMvcResultMatchers.jsonPath("status").value(400));
+                .andExpect(jsonPath("message").value("number format error"))
+                .andExpect(jsonPath("status").value(400));
     }
 }

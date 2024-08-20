@@ -3,7 +3,6 @@ package com.example.demo.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -48,7 +47,7 @@ public class CommentController {
     @PutMapping("/{id}")
     public ResponseEntity<CustomResponse<MessageResponse>> editComment(
         @PathVariable Long id,
-        @ModelAttribute @Valid UpdateCommentRequest req
+        @RequestBody @Valid UpdateCommentRequest req
     ) throws Exception {
         commentService.editComment(id, req);
         return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
