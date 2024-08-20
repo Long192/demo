@@ -4,6 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.example.demo.Exception.CustomException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -172,13 +173,13 @@ public class AuthControllerTest {
     public void LoginTestFailedWrongEmailOrPassword() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email@test.com").password("test").build();
 
-        when(authService.loginOtp(req)).thenThrow(new Exception("user not found"));
+        when(authService.loginOtp(req)).thenThrow(new CustomException(404, "user not found"));
 
         mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("message").value("user not found"))
-                .andExpect(jsonPath("status").value(400));
+                .andExpect(jsonPath("status").value(404));
     }
 
     @Test

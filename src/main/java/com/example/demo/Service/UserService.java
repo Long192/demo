@@ -3,6 +3,7 @@ package com.example.demo.Service;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 
+import com.example.demo.Exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +34,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User findById(Long id) throws Exception {
-        return userRepository.findById(id).orElseThrow(() -> new Exception("user not found"));
+        return userRepository.findById(id).orElseThrow(() -> new CustomException(404, "user not found"));
     }
 
     public Page<User> findAll(Pageable page, String search) {

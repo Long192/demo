@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import com.example.demo.Exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,21 +36,21 @@ public class CommentService {
             || comment.getPost().getUser().getId().equals(user.getId())) {
             commentRepository.delete(comment);
         }
-        throw new Exception("cannot delete this comment");
+        throw new CustomException(403, "cannot delete this comment");
     }
 
     public void editComment(Long id, UpdateCommentRequest request) throws Exception {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Comment comment =
-            commentRepository.findById(id).orElseThrow(() -> new Exception("comment not found"));
+            commentRepository.findById(id).orElseThrow(() -> new CustomException(404,"comment not found"));
         if(!user.getId().equals(comment.getUser().getId())) {
-            throw new Exception("cannot edit this comment");
+            throw new CustomException(403, "cannot edit this comment");
         }
         comment.setContent(request.getContent());
         commentRepository.save(comment);
     }
 
     public Comment findById(Long id) throws Exception {
-        return commentRepository.findById(id).orElseThrow(() -> new Exception("comment not found"));
+        return commentRepository.findById(id).orElseThrow(() -> new CustomException(404, "comment not found"));
     }
 }

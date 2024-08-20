@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.example.demo.Exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -31,13 +32,11 @@ public class FriendService {
     public Page<PostDto> getFriendPost(Pageable pageable) throws Exception {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
         List<Long> friendIds = new ArrayList<>();
-        getAllFriend().forEach(user -> {
-            friendIds.add(user.getId());
-        });
+        getAllFriend().forEach(user -> friendIds.add(user.getId()));
         try {
             return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
         } catch (InvalidDataAccessApiUsageException e) {
-            throw new Exception("cannot find attribute " + pageable.getSort().toString());
+            throw new Exception("cannot find attribute " + pageable.getSort());
         }
     }
 
@@ -59,18 +58,18 @@ public class FriendService {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Friend friend = friendRepository.findByFriendRequesterAndFriendReceiver(requesterId, me.getId());
         if (friend == null) {
-            throw new Exception("friend not found");
+            throw new CustomException(404, "friend not found");
         }
 
         if (friend.getStatus().equals(FriendStatusEnum.accepted)) {
-            throw new Exception("already friend");
+            throw new CustomException(404, "already friend");
         }
         
         friend.setStatus(FriendStatusEnum.accepted);
         friendRepository.save(friend);
     }
 
-    public void removeFriend(Long friendId) throws Exception {
+    public void removeFriend(Long friendId) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         friendRepository.deleteFriend(user.getId(), friendId);
     }
@@ -86,7 +85,7 @@ public class FriendService {
         }
     }
 
-    private List<User> getAllFriend() {
+    private List<User> getAllFriend() throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
         return friendToUser(friends, userToken.getId());

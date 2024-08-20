@@ -28,17 +28,6 @@ public class ImageService {
     @Autowired
     private ImageRepository imageRepository;
 
-//    public void upload(List<MultipartFile> multiPartFiles, Post post)
-//        throws Exception {
-//        List<Image> images = new ArrayList<>();
-//        for (MultipartFile file : multiPartFiles) {
-//            Image image = new Image();
-//            image.setPost(post);
-//            image.setUrl(uploadAndGetUrl(file));
-//            images.add(image);
-//        }
-//        imageRepository.saveAll(images);
-//    }
 
     public List<Image> upload(List<MultipartFile> multiPartFiles, Post post)
         throws Exception {
@@ -67,19 +56,6 @@ public class ImageService {
         return Urls.cdn(builder).toURL().toString();
     }
 
-//    public List<Image> editImage(List<Object> files, Post post, List<String> removeUrls)
-//        throws Exception {
-//        List<Image> images = post.getImages();
-//        if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
-//            images.addAll(upload(files, post));
-//        }
-//        if (removeUrls != null && (!removeUrls.isEmpty())) {
-//            List<Image> removeImages = imageRepository.findAllByUrls(removeUrls);
-//            images.removeAll(removeImages);
-//        }
-//        return images;
-//    }
-
     public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls)
         throws Exception {
         List<Image> images = post.getImages();
@@ -93,22 +69,6 @@ public class ImageService {
         return images;
     }
 
-//    public List<Image> editImage(List<Object> files, Post post)
-//        throws Exception {
-//        List<Image> images = new ArrayList<>();
-//        for (Object file : files) {
-//            if(file instanceof String){
-//                images.add(imageRepository.findAllByUrl((String)file));
-//                continue;
-//            }
-//
-//            if(file instanceof MultipartFile){
-//                Image image = Image.builder().url(uploadAndGetUrl((MultipartFile)file)).post(post).build();
-//                images.add(image);
-//            }
-//        }
-//        return images;
-//    }
 
     private File convertToFile(MultipartFile multiPartFile) {
         File file = new File(Objects.requireNonNull(multiPartFile.getOriginalFilename()));

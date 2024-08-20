@@ -8,6 +8,7 @@ import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.OtpDto;
 import com.example.demo.Enum.RoleEnum;
 import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.ForgotPassword;
 import com.example.demo.Model.Otp;
 import com.example.demo.Model.User;
@@ -91,7 +92,9 @@ public class AuthService {
 
     public OtpDto loginOtp(LoginRequest request) throws Exception {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new Exception("user not found"));
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
+                () -> new CustomException(404,"user not found")
+        );
         OtpDto otpDto = new OtpDto();
         Otp otp = new Otp();
         otp.setOtp(AppUtils.generateOtp());
@@ -104,7 +107,7 @@ public class AuthService {
     }
 
     public ForgotPasswordResponse forgotPassword(String email) throws Exception {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("user not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
         ForgotPasswordResponse urlResponse = new ForgotPasswordResponse();
         String token = UUID.randomUUID().toString();
         String url = environment.getProperty("spring.base-url") + "/auth/reset-password?userId=" + user.getId()
@@ -119,12 +122,14 @@ public class AuthService {
     }
 
     public void resetPassword(String password, String id, String token) throws Exception {
-        User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new Exception("user not found"));
+        User user = userRepository.findById(Long.valueOf(id)).orElseThrow(
+                () -> new CustomException(404,"user not found")
+        );
         ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
         if (forgotPassword == null)
-            throw new Exception("reset password request not found");
+            throw new CustomException(404, "reset password request not found");
         if (validateResetPasswordToken(forgotPassword, token))
-            throw new Exception("reset password request expired");
+            throw new CustomException(404, "reset password request expired");
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
     }
@@ -132,7 +137,7 @@ public class AuthService {
     public LoginResponse refreshToken(String refreshToken) throws Exception {
         LoginResponse response = new LoginResponse();
         String email = jwtUtil.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new Exception("user not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
         String token = jwtUtil.generateToken(user);
         response.setToken(token);
         return response;

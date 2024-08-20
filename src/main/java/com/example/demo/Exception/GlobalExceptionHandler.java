@@ -98,4 +98,12 @@ public class GlobalExceptionHandler<T> {
         response.setMessage("number format error");
         return ResponseEntity.badRequest().body(response);
     }
+
+    @ExceptionHandler(value = CustomException.class)
+    ResponseEntity<CustomResponse<T>> handlingCustomException(CustomException exception) {
+        CustomResponse<T> response = new CustomResponse<>();
+        response.setStatus(exception.getErrorCode());
+        response.setMessage(exception.getMessage());
+        return ResponseEntity.status(exception.getErrorCode()).body(response);
+    }
 }

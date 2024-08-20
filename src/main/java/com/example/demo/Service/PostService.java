@@ -3,6 +3,7 @@ package com.example.demo.Service;
 import java.sql.Timestamp;
 import java.util.List;
 
+import com.example.demo.Exception.CustomException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -71,14 +72,14 @@ public class PostService {
     }
 
     public Post findById(Long id) throws Exception {
-        return postRepository.findById(id).orElseThrow(() -> new Exception("post not found"));
+        return postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
     }
 
     public void editPost(Long id, UpdatePostRequest data) throws Exception {
-        Post post = postRepository.findById(id).orElseThrow(() -> new Exception("post not found"));
+        Post post = postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!post.getUser().getId().equals(user.getId())) {
-            throw new Exception("you don't have permisson to edit this post");
+            throw new CustomException(401, "you don't have permission to edit this post");
         }
         post.setContent(data.getContent());
         post.setStatus(data.getStatus());

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Arrays;
 
+import com.example.demo.Exception.CustomException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,9 +28,7 @@ import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Model.Post;
-import com.example.demo.Service.ImageService;
 import com.example.demo.Service.PostService;
-import com.example.demo.Service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +43,6 @@ public class PostControllerTest {
 
     @MockBean
     private PostService postService;
-
-    @MockBean
-    private ImageService imageService;
-
-    @MockBean
-    private UserService userService;
     
     PostDto post1 = PostDto.builder().content("content1").build();
     PostDto post2 = PostDto.builder().content("content2").build();
@@ -213,12 +206,12 @@ public class PostControllerTest {
 
         LikeRequest req = LikeRequest.builder().postId(1L).build();
 
-        doThrow(new Exception("post not found")).when(postService).like(req.getPostId());
+        doThrow(new CustomException(404, "post not found")).when(postService).like(req.getPostId());
 
         mockMvc.perform(post("/post/like").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("status").value(400))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("status").value(404))
                 .andExpect(jsonPath("message").value("post not found"));
     }
 
@@ -246,7 +239,8 @@ public class PostControllerTest {
     public void editPostFailedPostNotFound() throws Exception{
         MockMultipartFile mockFile = new MockMultipartFile("images","img.jpeg", MediaType.IMAGE_JPEG_VALUE, "img".getBytes());
 
-        doThrow(new Exception("post not found")).when(postService).editPost(anyLong(), any(UpdatePostRequest.class));
+        doThrow(new CustomException(404 ,"post not found")).when(postService).editPost(anyLong(),
+                any(UpdatePostRequest.class));
 
         mockMvc.perform(multipart(HttpMethod.PUT, "/post/1")
                 .file(mockFile)
@@ -254,8 +248,8 @@ public class PostControllerTest {
                 .param("content", "new content")
                 .param("status", "active")
                 .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("message").value("post not found"))
-                .andExpect(jsonPath("status").value(400));
+                .andExpect(jsonPath("status").value(404));
     }
 }
