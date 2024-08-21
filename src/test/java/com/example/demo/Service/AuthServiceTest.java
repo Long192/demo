@@ -9,8 +9,12 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.example.demo.Dto.Response.ForgotPasswordResponse;
+import com.example.demo.Model.ForgotPassword;
+import com.example.demo.Repository.ForgotPasswordRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -63,10 +68,20 @@ public class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private Environment environment;
+
+    @Mock
+    private ForgotPasswordRepository forgotPasswordRepository;
+
+    UUID mockUUID = UUID.randomUUID();
+
     MockedStatic<AppUtils> mockedStatic;
+    MockedStatic<UUID> uuidMockedStatic;
 
     @BeforeEach
     public void setup() {
+        uuidMockedStatic = mockStatic(UUID.class);
         mockedStatic = mockStatic(AppUtils.class);
     }
 
@@ -107,7 +122,7 @@ public class AuthServiceTest {
 
         when(authenticationManager.authenticate(any())).thenReturn(null);
         when(userRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(user));
-        mockedStatic.when(() -> AppUtils.generateOtp()).thenReturn("3214");
+        mockedStatic.when(AppUtils::generateOtp).thenReturn("3214");
 
         OtpDto otpDto = authService.loginOtp(req);
 
@@ -119,7 +134,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void LoginOtpFailedUserNotFound() throws Exception {
+    public void LoginOtpFailedUserNotFound() {
         LoginRequest req = LoginRequest.builder().email("email@email.com").password("password").build();
         when(userRepository.findByEmail(req.getEmail())).thenReturn(Optional.empty());
 
@@ -133,7 +148,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void LoginOtpFailedWrongUserNameOrPassword() throws Exception {
+    public void LoginOtpFailedWrongUserNameOrPassword() {
         LoginRequest req = LoginRequest.builder().email("email@email.com").password("password").build();
 
         when(authenticationManager.authenticate(any())).thenThrow(new RuntimeException("wrong email or password"));
@@ -180,7 +195,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void loginFailedOtpInvalid() throws Exception {
+    public void loginFailedOtpInvalid() {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("4512").build();
 
         when(otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(req.getOtp(), req.getUserId())).thenReturn(null);
@@ -214,10 +229,64 @@ public class AuthServiceTest {
         assertEquals(exception.getMessage(), "otp or user invalid");
     }
 
-    
+    @Test
+    public  void loginFailedUserNotFound() {
+        User user = User.builder()
+                .email("email@email.com")
+                .address("address")
+                .password("password")
+                .fullname("fullname")
+                .build();
+
+        Otp otp = Otp.builder()
+                .otp("4512")
+                .user(user)
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
+                .build();
+
+        GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("4512").build();
+
+        when(otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(req.getOtp(), req.getUserId())).thenReturn(otp);
+        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(Exception.class, () -> authService.login(req));
+
+        assertEquals(exception.getMessage(), "user not found");
+    }
+
+    @Test
+    public void forgotPasswordTestSuccess() throws Exception {
+        User user = User.builder().id(1L).email("email@email.com").password("password").build();
+        String url = environment.getProperty("spring.base-url") + "/auth/reset-password?userId=" + user.getId() +
+                "&token=" + mockUUID.toString();
+        ForgotPasswordResponse resExpect = ForgotPasswordResponse.builder().url(url).build();
+        ForgotPassword forgotPassword = ForgotPassword.builder()
+                .token(mockUUID.toString())
+                .user(user)
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
+                .build();
+
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        uuidMockedStatic.when(UUID::randomUUID).thenReturn(mockUUID);
+
+        ArgumentCaptor<ForgotPassword> captor = ArgumentCaptor.forClass(ForgotPassword.class);
+
+        ForgotPasswordResponse res = authService.forgotPassword(user.getEmail());
+
+        verify(forgotPasswordRepository, atLeastOnce()).save(captor.capture());
+
+        ForgotPassword forgotPasswordCaptor = captor.getValue();
+
+        assertEquals(res.getUrl(), resExpect.getUrl());
+        assertNotNull(forgotPasswordCaptor);
+        assertEquals(forgotPassword.getToken(), mockUUID.toString());
+        assertEquals(forgotPassword.getUser(), user);
+
+    }
 
     @AfterEach
     public void tearDown() {
+        uuidMockedStatic.close();
         mockedStatic.close();
     }
 }
