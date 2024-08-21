@@ -3,7 +3,6 @@ package com.example.demo.Service;
 import java.sql.Timestamp;
 import java.util.List;
 
-import com.example.demo.Exception.CustomException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -16,6 +15,7 @@ import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
@@ -56,7 +56,7 @@ public class PostService {
             Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
             return postPage.map(source -> modelMapper.map(source, PostDto.class));
         }catch (InvalidDataAccessApiUsageException e){
-            throw new Exception("cannot find attribute " + pageable.getSort());
+            throw new Exception("wrong sort by");
         }
     }
 
@@ -67,7 +67,7 @@ public class PostService {
             Page<Post> postPage = postRepository.getPostByUserIdAndSearch(user.getId(), pageable, search);
             return postPage.map(source -> modelMapper.map(source, PostDto.class));
         }catch(InvalidDataAccessApiUsageException e){
-            throw new Exception("cannot find attribute " + pageable.getSort());
+            throw new Exception("wrong sort by");
         }
     }
 

@@ -1,13 +1,14 @@
 package com.example.demo.Controller;
 
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.example.demo.Model.User;
-import com.example.demo.Service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,7 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
+import com.example.demo.Model.User;
+import com.example.demo.Service.ExcelService;
+import com.example.demo.Service.UserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -30,13 +33,12 @@ public class UserControllerTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private ExcelService excelService;
+
     User user1 = User.builder().email("email1").fullname("fullname1").build();
     User user2 = User.builder().email("email2").fullname("fullname2").build();
     User user3 = User.builder().email("email3").fullname("fullname3").build();
-
-    private static String asJsonString(final Object obj) throws Exception {
-        return new ObjectMapper().writeValueAsString(obj);
-    }
 
     @Test
     @WithMockUser
@@ -56,5 +58,55 @@ public class UserControllerTest {
                 .andExpect(jsonPath("data.content[1].fullname").value(user2.getFullname()))
                 .andExpect(jsonPath("data.content[2].email").value(user3.getEmail()))
                 .andExpect(jsonPath("data.content[2].fullname").value(user3.getFullname()));
+    }
+
+    @Test
+    @WithMockUser
+    public void getAllUserFailedNegativePageIndex () throws Exception {
+
+        when(userService.findAll(any(Pageable.class), anyString()))
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
+
+        mockMvc.perform(get("/user")
+                .param("page", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("Page index must not be less than zero"))
+                .andExpect(jsonPath("status").value(400));
+    }
+
+    @Test
+    @WithMockUser
+    public void getAllUserFailedNegativePageSize () throws Exception {
+
+        when(userService.findAll(any(Pageable.class), anyString()))
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
+
+        mockMvc.perform(get("/user")
+                .param("size", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("Page size must not be less than one"))
+                .andExpect(jsonPath("status").value(400));
+    }
+
+    @Test
+    @WithMockUser
+    public void getAllUserFailedWrongSortBy () throws Exception {
+
+        when(userService.findAll(any(Pageable.class), anyString()))
+                .thenThrow(new Exception("wrong sort order"));
+
+        mockMvc.perform(get("/user"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("message").value("wrong sort order"))
+                .andExpect(jsonPath("status").value(400));
+    }
+
+    @Test
+    @WithMockUser
+    public void reportUserSuccess() throws Exception {
+        mockMvc.perform(get("/user/report"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("attachment; filename=users_")))
+                .andExpect(content().contentType("application/octet-stream"));
     }
 }

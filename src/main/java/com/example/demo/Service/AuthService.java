@@ -1,5 +1,21 @@
 package com.example.demo.Service;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
@@ -17,20 +33,6 @@ import com.example.demo.Repository.OtpRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -60,13 +62,14 @@ public class AuthService {
         user.setRole(RoleEnum.user);
         user.setAvatar(request.getAvatar() != null ? imageService.uploadAndGetUrl(request.getAvatar()) : null);
         user.setFullname(request.getFullname());
-        user.setDob(request.getDob() != null ? new Date(dateFormat.parse(request.getDob()).getTime()) : null);
+        user.setDob(request.getDob() != null || !request.getDob().isBlank() ?
+                new Date(dateFormat.parse(request.getDob()).getTime()) : null);
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
         userRepository.save(user);
     }
 
-    public LoginResponse login(GetTokenRequest request) {
+    public LoginResponse login(GetTokenRequest request) throws Exception {
         LoginResponse response = new LoginResponse();
         Otp otp =
             otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(), request.getUserId());
@@ -75,7 +78,9 @@ public class AuthService {
             throw new BadCredentialsException("otp or user invalid");
         }
 
-        User user = userRepository.findById(otp.getUser().getId()).orElseThrow();
+        User user = userRepository.findById(otp.getUser().getId()).orElseThrow(
+            () -> new CustomException(404, "user not found")
+        );
         String jwt = jwtUtil.generateToken(user);
         String refresh = jwtUtil.generateRefreshToken(new HashMap<>(), user);
         response.setToken(jwt);
@@ -91,7 +96,11 @@ public class AuthService {
     }
 
     public OtpDto loginOtp(LoginRequest request) throws Exception {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        try{
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        }catch(AuthenticationException e){
+            throw new Exception("wrong email or password");
+        }
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                 () -> new CustomException(404,"user not found")
         );

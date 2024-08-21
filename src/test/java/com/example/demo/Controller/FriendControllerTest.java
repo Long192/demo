@@ -38,6 +38,10 @@ public class FriendControllerTest {
     User user2 = User.builder().email("email2").fullname("fullname2").build();
     User user3 = User.builder().email("email3").fullname("fullname3").build();
 
+    PostDto post1 = PostDto.builder().content("content 1").build();
+    PostDto post2 = PostDto.builder().content("content 2").build();
+    PostDto post3 = PostDto.builder().content("content 3").build();
+
     private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
     }
@@ -67,9 +71,10 @@ public class FriendControllerTest {
     public void getFriendFailedNegativePageIndex() throws Exception {
 
         when(friendService.getFriends(any(Pageable.class), anyString()))
-                .thenThrow(new Exception("Page index must not be less than zero"));
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
 
-        mockMvc.perform(get("/friend")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/friend").param("page", "-1"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page index must not be less than zero"))
                 .andExpect(jsonPath("status").value(400));
     }
@@ -79,9 +84,10 @@ public class FriendControllerTest {
     public void getFriendFailedNegativePageSize() throws Exception {
 
         when(friendService.getFriends(any(Pageable.class), anyString()))
-                .thenThrow(new Exception("Page size must not be less than one"));
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
 
-        mockMvc.perform(get("/friend")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/friend").param("size", "-10"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page size must not be less than one"))
                 .andExpect(jsonPath("status").value(400));
     }
@@ -102,10 +108,6 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendPostSuccess() throws Exception {
-
-        PostDto post1 = PostDto.builder().content("content 1").build();
-        PostDto post2 = PostDto.builder().content("content 2").build();
-        PostDto post3 = PostDto.builder().content("content 3").build();
 
         when(friendService.getFriendPost(any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
@@ -135,9 +137,11 @@ public class FriendControllerTest {
     public void getFriendPostsFailedNegativePageIndex() throws Exception {
 
         when(friendService.getFriendPost(any(Pageable.class)))
-                .thenThrow(new Exception("Page index must not be less than zero"));
+                .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
 
-        mockMvc.perform(get("/friend/friend-posts")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/friend/friend-posts")
+                .param("page", "-1"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page index must not be less than zero"))
                 .andExpect(jsonPath("status").value(400));
     }
@@ -147,9 +151,11 @@ public class FriendControllerTest {
     public void getFriendPostsFailedNegativePageSize() throws Exception {
 
         when(friendService.getFriendPost(any(Pageable.class)))
-                .thenThrow(new Exception("Page size must not be less than one"));
+                .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
 
-        mockMvc.perform(get("/friend/friend-posts")).andExpect(status().isBadRequest())
+        mockMvc.perform(get("/friend/friend-posts")
+                .param("size", "-10"))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page size must not be less than one"))
                 .andExpect(jsonPath("status").value(400));
     }
@@ -236,9 +242,10 @@ public class FriendControllerTest {
     public void getFriendRequestFailedNegativePageIndex() throws Exception {
 
         when(friendService.getFriendRequests(any(Pageable.class)))
-                .thenThrow(new Exception("Page index must not be less than zero"));
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
 
-        mockMvc.perform(get("/friend/friend-request"))
+        mockMvc.perform(get("/friend/friend-request")
+                .param("page", "-1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page index must not be less than zero"))
                 .andExpect(jsonPath("status").value(400));
@@ -249,9 +256,10 @@ public class FriendControllerTest {
     public void getFriendRequestFailedNegativePageSize() throws Exception {
 
         when(friendService.getFriendRequests(any(Pageable.class)))
-                .thenThrow(new Exception("Page size must not be less than one"));
+                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
 
-        mockMvc.perform(get("/friend/friend-request"))
+        mockMvc.perform(get("/friend/friend-request")
+                .param("size", "-10"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page size must not be less than one"))
                 .andExpect(jsonPath("status").value(400));

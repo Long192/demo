@@ -4,7 +4,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.example.demo.Exception.CustomException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,6 +24,7 @@ import com.example.demo.Dto.Request.SignUpRequest;
 import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.OtpDto;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

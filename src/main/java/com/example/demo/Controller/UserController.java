@@ -48,7 +48,7 @@ public class UserController {
         @RequestParam(defaultValue = "") String search,
         @RequestParam(defaultValue = "id") String sortBy,
         @RequestParam(defaultValue = "asc") OrderEnum order
-    ) {
+    ) throws Exception {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
         Page<UserDto> users = userService.findAll(pageable, search).map(source -> mapper.map(source, UserDto.class));
@@ -58,7 +58,7 @@ public class UserController {
 
     @Operation(summary = "report", description = "export excel file to show how many new post, like, comment, friend current logged in user have in previous week ")
     @GetMapping(value = "/report")
-    public void getMethodName(HttpServletResponse response) throws Exception {
+    public void report(HttpServletResponse response) throws Exception {
         response.setContentType("application/octet-stream");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
         String currentDateTime = dateFormatter.format(new Date());

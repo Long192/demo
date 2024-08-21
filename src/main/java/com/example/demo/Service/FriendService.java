@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.example.demo.Exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.FriendStatusEnum;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Friend;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.FriendRepository;
@@ -36,7 +36,7 @@ public class FriendService {
         try {
             return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
         } catch (InvalidDataAccessApiUsageException e) {
-            throw new Exception("cannot find attribute " + pageable.getSort());
+            throw new Exception("wrong sort by");
         }
     }
 
@@ -81,7 +81,7 @@ public class FriendService {
             List<User> users = friendToUser(friends.getContent(), userToken.getId());
             return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
         } catch (InvalidDataAccessApiUsageException e) {
-            throw new Exception("cannot find attribute " + pageable.getSort());
+            throw new Exception("wrong sort by");
         }
     }
 
@@ -93,9 +93,13 @@ public class FriendService {
 
     public Page<User> getFriendRequests(Pageable pageable) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Page<Friend> friends = friendRepository.findFriendRequests(userToken.getId(), pageable);
-        List<User> users = friendToUser(friends.getContent(), userToken.getId());
-        return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
+        try{
+            Page<Friend> friends = friendRepository.findFriendRequests(userToken.getId(), pageable);
+            List<User> users = friendToUser(friends.getContent(), userToken.getId());
+            return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
+        }catch(InvalidDataAccessApiUsageException e) {
+            throw new Exception("wrong sort by");
+        }
     }
 
     private List<User> friendToUser(List<Friend> friends, Long id) {

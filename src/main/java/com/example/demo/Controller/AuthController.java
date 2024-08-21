@@ -1,14 +1,30 @@
 package com.example.demo.Controller;
 
-import com.example.demo.Dto.Request.*;
-import com.example.demo.Dto.Response.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.Dto.Request.ForgotPasswordRequest;
+import com.example.demo.Dto.Request.GetTokenRequest;
+import com.example.demo.Dto.Request.LoginRequest;
+import com.example.demo.Dto.Request.RefreshTokenRequest;
+import com.example.demo.Dto.Request.ResetPasswordRequest;
+import com.example.demo.Dto.Request.SignUpRequest;
+import com.example.demo.Dto.Response.CustomResponse;
+import com.example.demo.Dto.Response.ForgotPasswordResponse;
+import com.example.demo.Dto.Response.LoginResponse;
+import com.example.demo.Dto.Response.MessageResponse;
+import com.example.demo.Dto.Response.OtpDto;
 import com.example.demo.Service.AuthService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "auth", description = "auth")
 @RestController
@@ -65,7 +81,9 @@ public class AuthController {
 
     @Operation(summary = "token", description = "get token with otp and user id")
     @PostMapping("/token")
-    public ResponseEntity<CustomResponse<LoginResponse>> getToken(@RequestBody @Valid GetTokenRequest entity) {
+    public ResponseEntity<CustomResponse<LoginResponse>> getToken(
+        @RequestBody @Valid GetTokenRequest entity
+    ) throws Exception {
         return ResponseEntity.ok(CustomResponse.<LoginResponse>builder().data(authService.login(entity)).build());
     }
 
