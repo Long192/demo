@@ -62,7 +62,7 @@ public class GlobalExceptionHandler<T> {
     @ExceptionHandler(value = UploadFailureException.class)
     ResponseEntity<CustomResponse<T>> handlingUploadFailureException() {
         CustomResponse<T> response = new CustomResponse<>();
-        response.setStatus(401);
+        response.setStatus(400);
         response.setMessage("failed to upload image");
         return ResponseEntity.badRequest().body(response);
     }

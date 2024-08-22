@@ -2,13 +2,18 @@ package com.example.demo.Controller;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.PostRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,7 +48,10 @@ public class PostControllerTest {
 
     @MockBean
     private PostService postService;
-    
+
+    @Mock
+    private PostRepository postRepository;
+
     PostDto post1 = PostDto.builder().content("content1").build();
     PostDto post2 = PostDto.builder().content("content2").build();
     PostDto post3 = PostDto.builder().content("content3").build();
@@ -251,5 +259,42 @@ public class PostControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("message").value("post not found"))
                 .andExpect(jsonPath("status").value(404));
+    }
+
+    @Test
+    @WithMockUser
+    public void deletePostSuccess() throws Exception {
+        mockMvc.perform(delete("/post/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data").exists())
+                .andExpect(jsonPath("data.message").value("success"))
+                .andExpect(jsonPath("data.status").value(true));
+    }
+
+    @Test
+    @WithMockUser
+    public void deletePostFailedPostNotFound() throws Exception {
+
+        doThrow(new CustomException(404, "post not found")).when(postService).deletePostById(anyLong());
+
+        mockMvc.perform(delete("/post/1"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("status").value(404))
+                .andExpect(jsonPath("message").value("post not found"));
+    }
+
+    @Test
+    @WithMockUser
+    public void deletePostFailedPermissionDenied() throws Exception {
+
+        doThrow(new CustomException(403, "you don't have permission to delete this post"))
+                .when(postService).deletePostById(anyLong());
+
+        mockMvc.perform(delete("/post/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("status").value(403))
+                .andExpect(jsonPath("message").value("you don't have permission to delete this post"));
     }
 }

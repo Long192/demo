@@ -118,7 +118,7 @@ public class PostController {
 
     @Operation(summary = "delete post", description = "delete a post by id")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<MessageResponse>> deletePost(@PathVariable Long id) {
+    public ResponseEntity<CustomResponse<MessageResponse>> deletePost(@PathVariable Long id) throws Exception {
         postService.deletePostById(id);
         return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
     }

@@ -71,21 +71,46 @@ public class PostServiceTest {
 
     @Test
     @Transactional
-    public void createPostsuccess() throws Exception {
+    public void createPostSuccess() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
+        CreatePostRequest req = CreatePostRequest.builder().images(List.of(file)).content("content").build();
+        User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
+        Post post = Post.builder()
+                .user(user)
+                .content("content")
+                .build();
+
+        postService.createPost(req);
+        
+        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
+
+        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
+        Post postCaptor = postCaptured.getValue();
+
+        verify(imageService, atLeastOnce()).upload(List.of(file), postCaptor);
+
+        assertNotNull(postCaptor);
+        assertEquals(postCaptor.getContent(), post.getContent());
+    }
+
+    @Test
+    @Transactional
+    public void createPostSuccessWithoutImages() throws Exception {
         CreatePostRequest req = CreatePostRequest.builder().content("content").build();
         User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
         Post post = Post.builder()
                 .user(user)
                 .content("content")
                 .build();
-                
+
         postService.createPost(req);
-        
-        ArgumentCaptor<Post> postCaptored = ArgumentCaptor.forClass(Post.class);
 
-        verify(postRepository, atLeastOnce()).save(postCaptored.capture());
+        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
 
-        Post postCaptor = postCaptored.getValue();
+        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
+        verify(imageService, never()).upload(any(), any(Post.class));
+        Post postCaptor = postCaptured.getValue();
+
 
         assertNotNull(postCaptor);
         assertEquals(postCaptor.getContent(), post.getContent());
@@ -207,11 +232,11 @@ public class PostServiceTest {
 
         postService.editPost(1L, req);
 
-        ArgumentCaptor<Post> postCaptored = ArgumentCaptor.forClass(Post.class);
+        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
 
-        verify(postRepository).save(postCaptored.capture());
+        verify(postRepository).save(postCaptured.capture());
 
-        Post postCaptor = postCaptored.getValue();
+        Post postCaptor = postCaptured.getValue();
 
         assertNotNull(postCaptor);
         assertEquals(post1, postCaptor);
@@ -224,7 +249,7 @@ public class PostServiceTest {
                 .content("content")
                 .build();
 
-        when(postRepository.findById(1l)).thenReturn(Optional.empty());
+        when(postRepository.findById(1L)).thenReturn(Optional.empty());
 
         CustomException exception = assertThrows(CustomException.class, () -> postService.editPost(1L, req));
 
@@ -243,7 +268,7 @@ public class PostServiceTest {
 
         assertNotNull(exception);
         assertEquals(exception.getMessage(), "you don't have permission to edit this post");
-        assertEquals(exception.getErrorCode(), 401);
+        assertEquals(exception.getErrorCode(), 403);
     }
 
     @Test

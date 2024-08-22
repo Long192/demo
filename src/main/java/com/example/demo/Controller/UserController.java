@@ -70,8 +70,17 @@ public class UserController {
 
     @Operation(summary = "update user", description = "update user info")
     @PutMapping(value = "", consumes = {"multipart/form-data"})
-    public ResponseEntity<CustomResponse<MessageResponse>> updateUserInfo (
+    public ResponseEntity<CustomResponse<MessageResponse>> updateUserInfoFormDat (
         @ModelAttribute UpdateUserRequest req
+    ) throws Exception {
+        userService.updateUser(req);
+        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+    }
+
+    @Operation(summary = "update user", description = "update user info")
+    @PutMapping(value = "", consumes = {"application/json"})
+    public ResponseEntity<CustomResponse<MessageResponse>> updateUserInfoJsonData (
+            @ModelAttribute UpdateUserRequest req
     ) throws Exception {
         userService.updateUser(req);
         return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());

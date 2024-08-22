@@ -81,7 +81,7 @@ public class PostService {
         Post post = postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!post.getUser().getId().equals(user.getId())) {
-            throw new CustomException(401, "you don't have permission to edit this post");
+            throw new CustomException(403, "you don't have permission to edit this post");
         }
         post.setContent(data.getContent());
         post.setStatus(data.getStatus());
@@ -107,8 +107,15 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public void deletePostById(Long id) {
-        postRepository.deleteById(id);
+    public void deletePostById(Long id) throws Exception {
+        Post post = findById(id);
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!post.getUser().getId().equals(user.getId())){
+            throw new CustomException(403, "you don't have permission to delete this post");
+        }
+
+        postRepository.delete(post);
     }
 
 }
