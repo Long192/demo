@@ -60,10 +60,14 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEtc(request.getEtc());
         user.setRole(RoleEnum.user);
-        user.setAvatar(request.getAvatar() != null ? imageService.uploadAndGetUrl(request.getAvatar()) : null);
         user.setFullname(request.getFullname());
-        user.setDob(request.getDob() != null || !request.getDob().isBlank() ?
-                new Date(dateFormat.parse(request.getDob()).getTime()) : null);
+        if(request.getAvatar() != null){
+            user.setAvatar(imageService.uploadAndGetUrl(request.getAvatar()));
+        }
+        
+        if(request.getDob() != null && !request.getDob().isBlank()){
+            user.setDob(new Date(dateFormat.parse(request.getDob()).getTime()));
+        }
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
         userRepository.save(user);
@@ -145,6 +149,9 @@ public class AuthService {
 
     public LoginResponse refreshToken(String refreshToken) throws Exception {
         LoginResponse response = new LoginResponse();
+        if(jwtUtil.isTokenExpired(refreshToken)){
+            throw new CustomException(403, "refreshToken expired");
+        }
         String email = jwtUtil.extractUsername(refreshToken);
         User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
         String token = jwtUtil.generateToken(user);
@@ -157,7 +164,6 @@ public class AuthService {
     }
 
     private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {
-        return !forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))
-            || !forgotPassword.getToken().equals(token);
+        return forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()));
     }
 }

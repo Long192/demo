@@ -12,9 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.example.demo.Dto.Response.ForgotPasswordResponse;
-import com.example.demo.Model.ForgotPassword;
-import com.example.demo.Repository.ForgotPasswordRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,11 +31,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
+import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.OtpDto;
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.ForgotPassword;
 import com.example.demo.Model.Otp;
 import com.example.demo.Model.User;
+import com.example.demo.Repository.ForgotPasswordRepository;
 import com.example.demo.Repository.OtpRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
@@ -281,7 +281,144 @@ public class AuthServiceTest {
         assertNotNull(forgotPasswordCaptor);
         assertEquals(forgotPassword.getToken(), mockUUID.toString());
         assertEquals(forgotPassword.getUser(), user);
+    }
 
+    @Test
+    public void forgotPasswordTestFailedUserNotFound() {
+        when(userRepository.findByEmail("email")).thenReturn(Optional.empty());
+
+        CustomException exception = assertThrows(CustomException.class, ()->authService.forgotPassword("email"));
+
+        assertEquals(exception.getMessage(), "user not found");
+        assertEquals(exception.getErrorCode(), 404);
+    }
+
+    @Test
+    public void resetPasswordSuccess() throws Exception {
+        String password = "password";
+        String token = "token";
+        String id = "1";
+
+        User user = User.builder().id(1L).email("email@email.com").password("password").build();
+        ForgotPassword forgotPassword = ForgotPassword.builder()
+                .id(1L)
+                .token(token)
+                .user(user)
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
+                .build();
+
+        when(userRepository.findById(Long.valueOf(id))).thenReturn(Optional.of(user));
+        when(forgotPasswordRepository.findByUserIdAndToken(user.getId(), token)).thenReturn(forgotPassword);
+        when(passwordEncoder.encode(password)).thenReturn(password);
+
+        authService.resetPassword(password, id, token);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+
+        verify(userRepository).save(captor.capture());
+
+        User userCapture = captor.getValue();
+
+        assertNotNull(userCapture);
+        assertEquals(user.getEmail(), userCapture.getEmail());
+        assertEquals(user.getPassword(), userCapture.getPassword());
+    }
+
+    @Test
+    public void resetPasswordFailedExpiredRequest() throws Exception {
+        String password = "password";
+        String token = "token";
+        String id = "1";
+
+        User user = User.builder().id(1L).email("email@email.com").password("password").build();
+        ForgotPassword forgotPassword = ForgotPassword.builder()
+                .id(1L)
+                .token(token)
+                .user(user)
+                .expiredAt(new Timestamp(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5)))
+                .build();
+
+        when(userRepository.findById(Long.valueOf(id))).thenReturn(Optional.of(user));
+        when(forgotPasswordRepository.findByUserIdAndToken(user.getId(), token)).thenReturn(forgotPassword);
+        when(passwordEncoder.encode(password)).thenReturn(password);
+
+        CustomException exception = assertThrows(CustomException.class, () -> authService.resetPassword(password, id, token));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "reset password request expired");
+    }
+
+    @Test
+    public void resetPasswordFailedRequestNotFound() throws Exception {
+        String password = "password";
+        String token = "token";
+        String id = "1";
+
+        User user = User.builder().id(1L).email("email@email.com").password("password").build();
+
+        when(userRepository.findById(Long.valueOf(id))).thenReturn(Optional.of(user));
+        when(forgotPasswordRepository.findByUserIdAndToken(user.getId(), token)).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> authService.resetPassword(password, id, token));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "reset password request not found");
+    }
+
+    @Test
+    public void resetPasswordFailedUserNotFound() throws Exception {
+        String password = "password";
+        String token = "token";
+        String id = "1";
+
+        when(userRepository.findById(Long.valueOf(id))).thenReturn(Optional.empty());
+
+        CustomException exception = assertThrows(CustomException.class, () -> authService.resetPassword(password, id, token));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "user not found");
+    }
+
+    @Test
+    public void refreshTokenSuccess() throws Exception {
+        String token = "token";
+        User user = User.builder().id(1L).email("email@email.com").password("password").build();
+
+        when(jwtUtil.isTokenExpired(token)).thenReturn(false);
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+        when(jwtUtil.extractUsername(token)).thenReturn("email@email.com");
+        when(jwtUtil.generateToken(user)).thenReturn("new token");
+
+        LoginResponse res = authService.refreshToken(token);
+
+        assertNotNull(res);
+        assertEquals(res.getToken(), "new token");
+    }
+
+    @Test
+    public void refreshTokenFailedTokenExpired() {
+        when(jwtUtil.isTokenExpired(anyString())).thenReturn(true);
+
+        CustomException exception = assertThrows(CustomException.class, () -> authService.refreshToken(anyString()));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 403);
+        assertEquals(exception.getMessage(), "refreshToken expired");
+    }
+
+    @Test
+    public void refreshTokenFailedUserNotFound() {
+        when(jwtUtil.isTokenExpired(anyString())).thenReturn(false);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
+        CustomException exception = assertThrows(CustomException.class, () -> authService.refreshToken(anyString()));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "user not found");
     }
 
     @AfterEach

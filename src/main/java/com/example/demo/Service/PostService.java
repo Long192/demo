@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
@@ -34,6 +35,7 @@ public class PostService {
     @Autowired
     private UserService userService;
 
+    @Transactional
     public void createPost(CreatePostRequest request) throws Exception {
         Post post = new Post();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -62,9 +64,8 @@ public class PostService {
 
     public Page<PostDto> findMyPostsAndPaginate(Pageable pageable, String search) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        User user = userService.findById(me.getId());
         try{
-            Page<Post> postPage = postRepository.getPostByUserIdAndSearch(user.getId(), pageable, search);
+            Page<Post> postPage = postRepository.getPostByUserIdAndSearch(me.getId(), pageable, search);
             return postPage.map(source -> modelMapper.map(source, PostDto.class));
         }catch(InvalidDataAccessApiUsageException e){
             throw new Exception("wrong sort by");
@@ -75,6 +76,7 @@ public class PostService {
         return postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
     }
 
+    @Transactional
     public void editPost(Long id, UpdatePostRequest data) throws Exception {
         Post post = postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
