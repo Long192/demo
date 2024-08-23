@@ -1,12 +1,12 @@
 package com.example.demo.Service;
 
-import com.example.demo.Exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.Dto.Request.AddCommentRequest;
 import com.example.demo.Dto.Request.UpdateCommentRequest;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Comment;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.CommentRepository;
@@ -35,6 +35,7 @@ public class CommentService {
         if (comment.getUser().getId().equals(user.getId())
             || comment.getPost().getUser().getId().equals(user.getId())) {
             commentRepository.delete(comment);
+            return;
         }
         throw new CustomException(403, "cannot delete this comment");
     }

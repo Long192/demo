@@ -34,8 +34,10 @@ public class FriendService {
         List<Long> friendIds = new ArrayList<>();
         getAllFriend().forEach(user -> friendIds.add(user.getId()));
         try {
+            System.out.println("try");
             return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
         } catch (InvalidDataAccessApiUsageException e) {
+            System.out.println("catch");
             throw new Exception("wrong sort by");
         }
     }
@@ -85,12 +87,6 @@ public class FriendService {
         }
     }
 
-    private List<User> getAllFriend() throws Exception {
-        User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
-        return friendToUser(friends, userToken.getId());
-    }
-
     public Page<User> getFriendRequests(Pageable pageable) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
@@ -100,6 +96,11 @@ public class FriendService {
         }catch(InvalidDataAccessApiUsageException e) {
             throw new Exception("wrong sort by");
         }
+    }
+
+    public List<Friend> getFriendRaw() {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return friendRepository.findAllFriends(user.getId());
     }
 
     private List<User> friendToUser(List<Friend> friends, Long id) {
@@ -114,8 +115,9 @@ public class FriendService {
         return friendList;
     }
 
-    public List<Friend> getFriendRaw() {
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return friendRepository.findAllFriends(user.getId());
+    private List<User> getAllFriend() throws Exception {
+        User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
+        return friendToUser(friends, userToken.getId());
     }
 }

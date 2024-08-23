@@ -1,5 +1,6 @@
 package com.example.demo.Dto.Response;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import com.example.demo.Enum.StatusEnum;
@@ -21,6 +22,6 @@ public class PostDto {
     private List<UserDto> likedByUsers;
     private List<CommentDto> comments;
     private List<ImageDto> images;
-    private String createdAt;
-    private String updatedAt;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 }

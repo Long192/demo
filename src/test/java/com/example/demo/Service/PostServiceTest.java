@@ -32,6 +32,7 @@ import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.Favourite;
 import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
@@ -52,6 +53,8 @@ public class PostServiceTest {
     private UserService userService;
     @Mock
     private ModelMapper modelMapper;
+    @Mock
+    private FavouriteService favouriteService;
 
     User user = User.builder().id(1L).email("email@email.com").build();
     User user2 = User.builder().id(2L).email("email@email.com").build();
@@ -282,6 +285,93 @@ public class PostServiceTest {
 
         assertNotNull(exception);
         assertEquals(exception.getMessage(), "cannot delete all content and image");
+    }
+
+    @Test
+    public void likeSuccess() throws Exception {
+        Favourite favourite = Favourite.builder().user(user).post(post1).build();
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
+        when(userService.findById(1L)).thenReturn(user);
+        when(favouriteService.findById(anyLong())).thenReturn(Optional.empty());
+
+        ArgumentCaptor<Favourite> favouriteCaptured = ArgumentCaptor.forClass(Favourite.class);
+
+        postService.like(1L);
+
+        verify(favouriteService, atLeastOnce()).save(favouriteCaptured.capture());
+
+        Favourite favouriteCaptor = favouriteCaptured.getValue();
+
+        assertNotNull(favouriteCaptor);
+        assertEquals(favourite, favouriteCaptor);
+    }
+
+    @Test
+    public void dissLikeSuccess() throws Exception {
+        Favourite favourite = Favourite.builder().id(1L).user(user).post(post1).build();
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
+        when(userService.findById(1L)).thenReturn(user);
+        when(favouriteService.findByUserIdAndPostId(user.getId(), post1.getId())).thenReturn(Optional.of(favourite));
+
+        postService.like(1L);
+        
+        ArgumentCaptor<Favourite> favouriteCaptor  = ArgumentCaptor.forClass(Favourite.class);
+        verify(favouriteService, atLeastOnce()).delete(favouriteCaptor.capture());
+        
+        Favourite favouriteCaptured = favouriteCaptor.getValue();
+
+        assertNotNull(favouriteCaptured);
+        assertEquals(favourite, favouriteCaptured);
+
+    }
+
+    @Test
+    public void likeFailedUserNotFound() throws Exception {
+        when(userService.findById(anyLong())).thenThrow(new CustomException(404, "user not found"));
+
+        CustomException exception = assertThrows(CustomException.class, () -> postService.like(1L));
+
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "user not found");
+    }
+
+    @Test
+    public void likeFailedPostNotFound() throws Exception {
+        when(userService.findById(anyLong())).thenReturn(user);
+        when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        CustomException exception = assertThrows(CustomException.class, () -> postService.like(1L));
+
+        assertEquals(exception.getErrorCode(), 404);
+        assertEquals(exception.getMessage(), "post not found");
+    }
+
+    @Test
+    public void deletePostSuccess() throws Exception {
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(post1));
+
+        postService.deletePostById(1L);
+
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+
+        verify(postRepository, times(1)).delete(postCaptor.capture());
+
+        Post postCaptured = postCaptor.getValue();
+
+        assertNotNull(postCaptured);
+        assertEquals(postCaptured, post1);
+    }
+
+    @Test
+    public void deletePostFailedPermissionDenied() throws Exception {
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(post4));
+
+        CustomException exception = assertThrows(CustomException.class, () -> postService.deletePostById(anyLong()));
+
+        assertEquals(exception.getErrorCode(), 403);
+        assertEquals(exception.getMessage(), "you don't have permission to delete this post");
     }
 
 }

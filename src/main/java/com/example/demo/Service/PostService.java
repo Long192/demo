@@ -2,6 +2,7 @@ package com.example.demo.Service;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +18,13 @@ import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.Favourite;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
-import com.example.demo.Repository.UserRepository;
 
 @Service
 public class PostService {
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private ModelMapper modelMapper;
     @Autowired
@@ -34,6 +33,8 @@ public class PostService {
     private PostRepository postRepository;
     @Autowired
     private UserService userService;
+    @Autowired
+    private FavouriteService favouriteService;
 
     @Transactional
     public void createPost(CreatePostRequest request) throws Exception {
@@ -49,6 +50,7 @@ public class PostService {
     }
 
     public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids, Timestamp timestamp, Pageable pageable) {
+        System.out.println("post size: ");
         Page<Post> posts = postRepository.findPostByUserIdsAndCreatedAt(ids, timestamp, pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
@@ -96,15 +98,15 @@ public class PostService {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
         Post post = findById(postId);
-        if (post.getLikedByUsers().contains(user)) {
-            post.getLikedByUsers().remove(user);
-            user.getLikePosts().remove(post);
-        } else {
-            post.getLikedByUsers().add(user);
-            user.getLikePosts().add(post);
+        Optional<Favourite> favourite = favouriteService.findByUserIdAndPostId(user.getId(), post.getId());
+        if (favourite.isPresent()) {
+            favouriteService.delete(favourite.get());
+            return;
         }
-        userRepository.save(user);
-        postRepository.save(post);
+
+        Favourite newFavourite = Favourite.builder().post(post).user(user).build();
+
+        favouriteService.save(newFavourite);
     }
 
     public void deletePostById(Long id) throws Exception {
