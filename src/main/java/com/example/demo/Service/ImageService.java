@@ -31,42 +31,27 @@ public class ImageService {
     private Client client;
     @Autowired
     private ImageRepository imageRepository;
+    @Autowired
+    private UploadService uploadService;
 
     @Transactional
-    public List<Image> upload(List<MultipartFile> multiPartFiles, Post post)
+    public List<Image>  upload(List<MultipartFile> multiPartFiles, Post post)
         throws Exception {
         List<Image> images = new ArrayList<>();
         for (MultipartFile file : multiPartFiles) {
             Image image = new Image();
             image.setPost(post);
-            image.setUrl(uploadAndGetUrl(file));
+            image.setUrl(uploadService.uploadAndGetUrl(file));
             images.add(image);
         }
-        try{
-            imageRepository.saveAll(images);
-        }catch (Exception e){
-            throw new CustomException(400, "cannot save image");
-        }
+
+        imageRepository.saveAll(images);
 
         return images;
     }
 
-    public String uploadAndGetUrl(MultipartFile multiPartFiles) throws Exception {
-        BufferedImage image = ImageIO.read(convertToFile(multiPartFiles));
-        if (image == null) {
-            throw new Exception("invalid image");
-        }
-        Uploader uploader = new FileUploader(client, convertToFile(multiPartFiles));
-        com.uploadcare.api.File uploadedFile = uploader.upload();
-        String fileId = uploadedFile.getFileId();
-        com.uploadcare.api.File fileResponse = client.getFile(fileId);
-        CdnPathBuilder builder = fileResponse.cdnPath();
-        return Urls.cdn(builder).toURL().toString();
-    }
-
     @Transactional
-    public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls)
-        throws Exception {
+    public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls) throws Exception {
         List<Image> images = post.getImages();
         if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
             images.addAll(upload(files, post));
@@ -74,18 +59,8 @@ public class ImageService {
         if (removeUrls != null && (!removeUrls.isEmpty())) {
             List<Image> removeImages = imageRepository.findAllByUrls(removeUrls);
             images.removeAll(removeImages);
+            imageRepository.deleteAll(images);
         }
         return images;
-    }
-
-
-    private File convertToFile(MultipartFile multiPartFile) {
-        File file = new File(Objects.requireNonNull(multiPartFile.getOriginalFilename()));
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(multiPartFile.getBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return file;
     }
 }

@@ -57,6 +57,9 @@ public class AuthServiceTest {
     private ImageService imageService;
 
     @Mock
+    private UploadService uploadService;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -97,7 +100,7 @@ public class AuthServiceTest {
                 .dob(new Date(format.parse(req.getDob()).getTime())).build();
 
         when(passwordEncoder.encode(req.getPassword())).thenReturn("password");
-        when(imageService.uploadAndGetUrl(file)).thenReturn("url");
+        when(uploadService.uploadAndGetUrl(file)).thenReturn("url");
 
         authService.signUp(req);
 

@@ -50,7 +50,6 @@ public class PostService {
     }
 
     public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids, Timestamp timestamp, Pageable pageable) {
-        System.out.println("post size: ");
         Page<Post> posts = postRepository.findPostByUserIdsAndCreatedAt(ids, timestamp, pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }

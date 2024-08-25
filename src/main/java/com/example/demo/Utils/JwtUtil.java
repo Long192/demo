@@ -53,4 +53,5 @@ public class JwtUtil {
     public Boolean isTokenExpired(String token) {
         return extractClaims(token, Claims::getExpiration).before(new Date());
     }
+
 }

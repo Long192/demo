@@ -1,6 +1,7 @@
 package com.example.demo.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,17 +39,9 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     )
     Page<Friend> findFriendRequests(@Param("user") Long user, Pageable page);
 
-    @Transactional
-    @Modifying
-    @Query(
-        "DELETE FROM Friend WHERE (friendReceiver.id = :userId AND friendRequester.id = :friendId) " +
-        "OR (friendReceiver.id = :friendId AND friendRequester.id = :userId)"
-    )
-    void deleteFriend(@Param("userId") Long userId, @Param("friendId") Long friendId);
-
     @Query(
         "SELECT f FROM Friend f WHERE (f.friendReceiver.id = :user AND f.friendRequester.id = :friend)" +
         " OR (f.friendReceiver.id = :friend AND f.friendRequester.id = :user)"
     )
-    Friend findByFriendRequesterAndFriendReceiver(Long user, Long friend);
+    Optional<Friend> findByFriendRequesterAndFriendReceiver(Long user, Long friend);
 }

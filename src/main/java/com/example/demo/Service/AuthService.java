@@ -49,7 +49,7 @@ public class AuthService {
     @Autowired
     private ForgotPasswordRepository forgotPasswordRepository;
     @Autowired
-    private ImageService imageService;
+    private UploadService uploadService;
     @Autowired
     private Environment environment;
 
@@ -62,7 +62,7 @@ public class AuthService {
         user.setRole(RoleEnum.user);
         user.setFullname(request.getFullname());
         if(request.getAvatar() != null){
-            user.setAvatar(imageService.uploadAndGetUrl(request.getAvatar()));
+            user.setAvatar(uploadService.uploadAndGetUrl(request.getAvatar()));
         }
         
         if(request.getDob() != null && !request.getDob().isBlank()){

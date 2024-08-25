@@ -25,7 +25,7 @@ public class UserService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Autowired
-    private ImageService imageService;
+    private UploadService uploadService;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -61,7 +61,7 @@ public class UserService implements UserDetailsService {
         }
 
         if(req.getAvatar() != null && !req.getAvatar().isEmpty()){
-            userInfo.setAvatar(imageService.uploadAndGetUrl(req.getAvatar()));
+            userInfo.setAvatar(uploadService.uploadAndGetUrl(req.getAvatar()));
         }
 
         if(req.getFullname() != null && !req.getFullname().isBlank()){

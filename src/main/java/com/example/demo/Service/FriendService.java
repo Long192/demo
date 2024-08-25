@@ -34,10 +34,8 @@ public class FriendService {
         List<Long> friendIds = new ArrayList<>();
         getAllFriend().forEach(user -> friendIds.add(user.getId()));
         try {
-            System.out.println("try");
             return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
         } catch (InvalidDataAccessApiUsageException e) {
-            System.out.println("catch");
             throw new Exception("wrong sort by");
         }
     }
@@ -46,7 +44,7 @@ public class FriendService {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
         User friend = userService.findById(friendId);
-        if (friendRepository.findByFriendRequesterAndFriendReceiver(user.getId(), friend.getId()) != null) {
+        if (friendRepository.findByFriendRequesterAndFriendReceiver(user.getId(), friend.getId()).isPresent()) {
             throw new Exception("already friend or waiting to be accept");
         }
         Friend friendShip = new Friend();
@@ -58,10 +56,8 @@ public class FriendService {
 
     public void updateFriendStatus(Long requesterId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Friend friend = friendRepository.findByFriendRequesterAndFriendReceiver(requesterId, me.getId());
-        if (friend == null) {
-            throw new CustomException(404, "friend not found");
-        }
+        Friend friend = friendRepository.findByFriendRequesterAndFriendReceiver(requesterId, me.getId())
+                .orElseThrow(() -> new CustomException(404, "friend not found"));
 
         if (friend.getStatus().equals(FriendStatusEnum.accepted)) {
             throw new CustomException(404, "already friend");
@@ -71,9 +67,11 @@ public class FriendService {
         friendRepository.save(friend);
     }
 
-    public void removeFriend(Long friendId) {
+    public void removeFriend(Long friendId) throws Exception {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        friendRepository.deleteFriend(user.getId(), friendId);
+        Friend friend = friendRepository.findByFriendRequesterAndFriendReceiver(user.getId(), friendId)
+                .orElseThrow(() -> new CustomException(404, "friend not found"));
+        friendRepository.delete(friend);
     }
 
     public Page<User> getFriends(Pageable pageable, String search) throws Exception {
@@ -115,7 +113,7 @@ public class FriendService {
         return friendList;
     }
 
-    private List<User> getAllFriend() throws Exception {
+    private List<User> getAllFriend() {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
         return friendToUser(friends, userToken.getId());
