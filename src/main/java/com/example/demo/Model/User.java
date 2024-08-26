@@ -14,6 +14,7 @@ import com.example.demo.Enum.RoleEnum;
 import com.example.demo.Enum.StatusEnum;
 
 import io.micrometer.common.lang.Nullable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -86,7 +87,7 @@ public class User implements UserDetails {
     @Column(name = "updated_at", nullable = false, updatable = false)
     private Timestamp updatedAt;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(name = "favourite", joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "post_id"))
     private List<Post> likePosts;

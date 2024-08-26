@@ -9,8 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Arrays;
 
-import com.example.demo.Dto.Request.UpdateUserRequest;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,9 +22,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.example.demo.Dto.Request.UpdateUserRequest;
 import com.example.demo.Model.User;
 import com.example.demo.Service.ExcelService;
 import com.example.demo.Service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -34,10 +34,8 @@ public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private UserService userService;
-
     @MockBean
     private ExcelService excelService;
 

@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 public class AddCommentRequest {
     @NotNull(message = "postId required")
     private Long postId;
-
     @NotBlank(message = "content required")
     @NotNull(message = "content required")
     private String content;

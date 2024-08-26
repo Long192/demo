@@ -1,8 +1,13 @@
 package com.example.demo.Service;
 
-import com.example.demo.Model.Comment;
-import com.example.demo.Model.Post;
-import com.example.demo.Model.User;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayInputStream;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,25 +18,18 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.io.ByteArrayInputStream;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import com.example.demo.Model.Comment;
+import com.example.demo.Model.Post;
+import com.example.demo.Model.User;
 
 @SpringBootTest
 public class ExcelServiceTest {
     @Mock
     private UserService userService;
-
     @Mock
     private FavouriteService favouriteService;
-
     @Mock
     private FriendService friendService;
-
     @InjectMocks
     private ExcelService excelService;
 

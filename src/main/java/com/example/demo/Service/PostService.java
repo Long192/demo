@@ -1,6 +1,5 @@
 package com.example.demo.Service;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,13 +43,13 @@ public class PostService {
         post.setUser(user);
         post.setStatus(StatusEnum.active);
         postRepository.save(post);
-        if (request.getImages() != null && !request.getImages().getFirst().isEmpty()) {
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
             imageService.upload(request.getImages(), post);
         }
     }
 
-    public Page<PostDto> findPostByUserIdsAndCreatedAt(List<Long> ids, Timestamp timestamp, Pageable pageable) {
-        Page<Post> posts = postRepository.findPostByUserIdsAndCreatedAt(ids, timestamp, pageable);
+    public Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
+        Page<Post> posts = postRepository.findByUserIdsOrderByCreatedAt(ids, pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
 
@@ -108,12 +107,18 @@ public class PostService {
         favouriteService.save(newFavourite);
     }
 
+    @Transactional
     public void deletePostById(Long id) throws Exception {
         Post post = findById(id);
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if(!post.getUser().getId().equals(user.getId())){
             throw new CustomException(403, "you don't have permission to delete this post");
+        }
+
+        for(User likeUser: post.getLikedByUsers()){
+            likeUser.getLikePosts().remove(post);
+            userService.save(likeUser);
         }
 
         postRepository.delete(post);

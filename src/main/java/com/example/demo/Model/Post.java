@@ -50,13 +50,13 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private StatusEnum status;
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL,  orphanRemoval = true)
     private List<Comment> comments;
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 
-    @ManyToMany(mappedBy = "likePosts")
+    @ManyToMany(mappedBy = "likePosts", cascade = CascadeType.PERSIST)
     private List<User> likedByUsers;
 
     @CreationTimestamp

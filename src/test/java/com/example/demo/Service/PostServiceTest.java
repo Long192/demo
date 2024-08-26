@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,6 +97,27 @@ public class PostServiceTest {
 
     @Test
     @Transactional
+    public void createPostSuccessWithImagesEmpty() throws Exception { 
+        CreatePostRequest req = CreatePostRequest.builder().images(List.of()).content("content").build();
+        User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
+        Post post = Post.builder()
+                .user(user)
+                .content("content")
+                .build();
+
+        postService.createPost(req);
+        
+        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
+
+        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
+        Post postCaptor = postCaptured.getValue();
+
+        assertNotNull(postCaptor);
+        assertEquals(postCaptor.getContent(), post.getContent());
+    }
+
+    @Test
+    @Transactional
     public void createPostSuccessWithoutImages() throws Exception {
         CreatePostRequest req = CreatePostRequest.builder().content("content").build();
         User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
@@ -136,12 +156,11 @@ public class PostServiceTest {
         Page<Post> posts = new PageImpl<>(List.of(post1, post2, post3));
         Page<PostDto>postDtos = posts.map(source -> modelMapper.map(source, PostDto.class));
         List<Long> ids = List.of(1L, 2L, 3L);
-        Timestamp createdAt = new Timestamp(System.currentTimeMillis());
         PageRequest page = PageRequest.of(0, 10);
 
-        when(postRepository.findPostByUserIdsAndCreatedAt(ids, createdAt, page)).thenReturn(posts);
+        when(postRepository.findByUserIdsOrderByCreatedAt(ids, page)).thenReturn(posts);
 
-        Page<PostDto> res = postService.findPostByUserIdsAndCreatedAt(ids, createdAt, page);
+        Page<PostDto> res = postService.findByUserIdsOrderByCreatedAt(ids, page);
 
         assertNotNull(res);
         assertEquals(res, postDtos);

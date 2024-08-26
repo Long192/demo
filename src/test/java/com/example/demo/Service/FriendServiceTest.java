@@ -1,13 +1,14 @@
 package com.example.demo.Service;
 
-import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Dto.Response.UserDto;
-import com.example.demo.Enum.FriendStatusEnum;
-import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.Friend;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.FriendRepository;
-import com.example.demo.Repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,20 +18,24 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Dto.Response.UserDto;
+import com.example.demo.Enum.FriendStatusEnum;
+import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.Friend;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.FriendRepository;
+import com.example.demo.Repository.UserRepository;
 
 @SpringBootTest
 public class FriendServiceTest {
@@ -78,7 +83,7 @@ public class FriendServiceTest {
                 .user(mapper.map(user3, UserDto.class)).build();
 
         when(friendRepository.findAllFriends(user.getId())).thenReturn(List.of(friend1, friend2, friend3));
-        when(postService.findPostByUserIdsAndCreatedAt(any(), any(Timestamp.class), any(Pageable.class)))
+        when(postService.findByUserIdsOrderByCreatedAt(any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(postDto1, postDto2, postDto3), pageable, 3));
 
         Page<PostDto> res = friendService.getFriendPost(pageable);
@@ -93,7 +98,7 @@ public class FriendServiceTest {
         PageRequest pageable = PageRequest.of(0, 10, sort);
 
         when(friendRepository.findAllFriends(user.getId())).thenReturn(List.of(friend1, friend2, friend3));
-        when(postService.findPostByUserIdsAndCreatedAt(any(), any(Timestamp.class), any(Pageable.class)))
+        when(postService.findByUserIdsOrderByCreatedAt(any(), any(Pageable.class)))
                 .thenThrow(new InvalidDataAccessApiUsageException("wrong sort by"));
 
         Exception exception =

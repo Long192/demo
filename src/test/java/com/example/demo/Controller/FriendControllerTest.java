@@ -30,7 +30,6 @@ public class FriendControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private FriendService friendService;
 

@@ -49,31 +49,22 @@ import com.example.demo.Utils.JwtUtil;
 public class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
-
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private ImageService imageService;
-
     @Mock
     private UploadService uploadService;
-
     @Mock
     private PasswordEncoder passwordEncoder;
-
     @Mock
     private AuthenticationManager authenticationManager;
-
     @Mock
     private OtpRepository otpRepository;
-
     @Mock
     private JwtUtil jwtUtil;
-
     @Mock
     private Environment environment;
-
     @Mock
     private ForgotPasswordRepository forgotPasswordRepository;
 
@@ -119,7 +110,63 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void LoginOtpSuccess() throws Exception {
+    public void SignupTestSuccessWithAvatar() throws Exception {
+        MockMultipartFile file =
+                new MockMultipartFile("avatar", "avatar.jpeg", MediaType.IMAGE_JPEG_VALUE, "avatar".getBytes());
+        SignUpRequest req = SignUpRequest.builder().email("email@testemail.com").password("password").etc("etc")
+                .address("address").fullname("fullname").avatar(file).build();
+        User user = User.builder().email(req.getEmail()).password(req.getPassword()).etc(req.getEtc())
+                .address(req.getAddress()).fullname(req.getFullname()).build();
+
+        when(passwordEncoder.encode(req.getPassword())).thenReturn("password");
+        when(uploadService.uploadAndGetUrl(file)).thenReturn("url");
+
+        authService.signUp(req);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+        verify(userRepository).save(userCaptor.capture());
+
+        User captureUser = userCaptor.getValue();
+
+        assertEquals(user.getEmail(), captureUser.getEmail());
+        assertEquals(user.getAddress(), captureUser.getAddress());
+        assertEquals(user.getDob(), captureUser.getDob());
+        assertEquals(user.getEtc(), captureUser.getEtc());
+        assertEquals(user.getFullname(), captureUser.getFullname());
+        assertEquals(user.getPassword(), captureUser.getPassword());
+    }
+
+    @Test
+    public void SignupTestSuccessDobBlank() throws Exception {
+        MockMultipartFile file =
+                new MockMultipartFile("avatar", "avatar.jpeg", MediaType.IMAGE_JPEG_VALUE, "avatar".getBytes());
+        SignUpRequest req = SignUpRequest.builder().email("email@testemail.com").password("password").etc("etc")
+                .address("address").fullname("fullname").avatar(file).dob("").build();
+        User user = User.builder().email(req.getEmail()).password(req.getPassword()).etc(req.getEtc())
+                .address(req.getAddress()).fullname(req.getFullname()).build();
+
+        when(passwordEncoder.encode(req.getPassword())).thenReturn("password");
+        when(uploadService.uploadAndGetUrl(file)).thenReturn("url");
+
+        authService.signUp(req);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+
+        verify(userRepository).save(userCaptor.capture());
+
+        User captureUser = userCaptor.getValue();
+
+        assertEquals(user.getEmail(), captureUser.getEmail());
+        assertEquals(user.getAddress(), captureUser.getAddress());
+        assertEquals(user.getDob(), captureUser.getDob());
+        assertEquals(user.getEtc(), captureUser.getEtc());
+        assertEquals(user.getFullname(), captureUser.getFullname());
+        assertEquals(user.getPassword(), captureUser.getPassword());
+    }
+
+    @Test
+    public void LoginOtpSuccessdobNull() throws Exception {
         LoginRequest req = LoginRequest.builder().email("email@email.com").password("password").build();
         User user = User.builder().id(1L).email("email@email.com").build();
 
@@ -165,6 +212,41 @@ public class AuthServiceTest {
 
     @Test
     public void loginSuccess() throws Exception {
+        GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("4512").build();
+
+        User user = User.builder()
+                .email("email@email.com")
+                .address("address")
+                .password("password")
+                .fullname("fullname")
+                .dob(new Date(1030820707))
+                .build();
+
+        Otp otp = Otp.builder()
+                .otp("3123")
+                .user(user)
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
+                .build();
+                
+
+        when(otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(req.getOtp(), req.getUserId())).thenReturn(otp);
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken(user)).thenReturn("token");
+        when(jwtUtil.generateRefreshToken(new HashMap<>(), user)).thenReturn("refresh");
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        LoginResponse res = authService.login(req);
+
+        assertNotNull(res);
+        assertEquals(res.getFullname(), "fullname");
+        assertEquals(res.getToken(), "token");
+        assertEquals(res.getRefreshToken(), "refresh");
+        assertEquals(res.getEmail(), "email@email.com");
+        assertEquals(res.getAddress(), "address");
+    }
+
+    @Test
+    public void loginSuccessDobNull() throws Exception {
         GetTokenRequest req = GetTokenRequest.builder().UserId(1L).otp("4512").build();
 
         User user = User.builder()

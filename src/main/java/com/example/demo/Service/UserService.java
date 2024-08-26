@@ -19,14 +19,14 @@ import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.UserRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private UploadService uploadService;
-    
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -45,6 +45,11 @@ public class UserService implements UserDetailsService {
         }catch(InvalidDataAccessApiUsageException e){
             throw new Exception("wrong sort by");
         }
+    }
+
+    @Transactional
+    public void save(User user){
+        userRepository.save(user);
     }
 
     public void updateUser(UpdateUserRequest req) throws Exception {

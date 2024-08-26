@@ -1,9 +1,7 @@
 package com.example.demo.Service;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -30,11 +28,10 @@ public class FriendService {
     private PostService postService;
 
     public Page<PostDto> getFriendPost(Pageable pageable) throws Exception {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7));
         List<Long> friendIds = new ArrayList<>();
         getAllFriend().forEach(user -> friendIds.add(user.getId()));
         try {
-            return postService.findPostByUserIdsAndCreatedAt(friendIds, timestamp, pageable);
+            return postService.findByUserIdsOrderByCreatedAt(friendIds, pageable);
         } catch (InvalidDataAccessApiUsageException e) {
             throw new Exception("wrong sort by");
         }

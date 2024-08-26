@@ -1,34 +1,19 @@
 package com.example.demo.Service;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
 import com.example.demo.Repository.ImageRepository;
-import com.uploadcare.api.Client;
-import com.uploadcare.upload.FileUploader;
-import com.uploadcare.upload.Uploader;
-import com.uploadcare.urls.CdnPathBuilder;
-import com.uploadcare.urls.Urls;
 
 @Service
 public class ImageService {
-    @Autowired
-    private Client client;
     @Autowired
     private ImageRepository imageRepository;
     @Autowired

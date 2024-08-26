@@ -60,11 +60,9 @@ public class FriendController {
     public ResponseEntity<CustomResponse<Page<PostDto>>> getFriendPost(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "id") String sortBy,
-        @RequestParam(defaultValue = "asc") OrderEnum order
+        @RequestParam(defaultValue = "id") String sortBy
     ) throws Exception {
-        Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
-        PageRequest pageable = PageRequest.of(page, size, sort);
+        PageRequest pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(
             CustomResponse.<Page<PostDto>>builder().data(friendService.getFriendPost(pageable)).build()
         );

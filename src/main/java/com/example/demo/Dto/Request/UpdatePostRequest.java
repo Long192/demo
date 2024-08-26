@@ -19,14 +19,8 @@ import lombok.NoArgsConstructor;
 public class UpdatePostRequest {
     @NotNull(message = "content required")
     private String content;
-
     private List<MultipartFile> images;
-
     private List<String> removeImages;
-
-//    @NotNull(message = "image required")
-//    private List<Object> images;
-
     @NotNull(message = "status required")
     private StatusEnum status;
 }

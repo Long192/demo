@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 public class CommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private CommentService commentService;
 

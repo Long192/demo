@@ -18,18 +18,13 @@ import lombok.NoArgsConstructor;
 public class UpdateUserRequest {
     @Size(min = 6, message = "password need at least 6 character")
     private String password;
-
     @NotNull(message = "fullname required")
     private String fullname;
-
     private MultipartFile avatar;
-
     @NotNull(message = "address required")
     private String address;
-
     @NotNull(message = "etc required")
     private String etc;
-
     @JsonFormat(pattern = "yyyy/MM/dd")
     @NotNull(message = "dob required")
     private String dob;

@@ -1,6 +1,7 @@
 package com.example.demo.Dto.Request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -17,7 +18,6 @@ public class LoginRequest {
     @NotBlank(message = "email required")
     @Email(message = "wrong email format")
     private String email;
-
     @NotBlank(message = "password required")
     private String password;
 }

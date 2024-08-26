@@ -37,7 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private AuthService authService;
 

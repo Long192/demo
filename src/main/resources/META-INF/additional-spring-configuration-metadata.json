@@ -7,8 +7,13 @@
     },
     {
       "name": "spring.security.expired",
-      "type": "java.lang.String",
+      "type": "java.lang.Long",
       "description": "A description for 'spring.security.expired'"
+    },
+    {
+      "name": "spring.security.expired-refresh",
+      "type": "java.lang.Long",
+      "description": "A description for 'spring.security.expired-refresh'"
     },
     {
       "name": "base-url",

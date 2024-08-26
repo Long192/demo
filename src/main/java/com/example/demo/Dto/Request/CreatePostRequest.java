@@ -18,6 +18,5 @@ import lombok.NoArgsConstructor;
 @AtLeastOneFieldNotNull(fields = {"content", "images"}, message = "content or image required")
 public class CreatePostRequest {
     private String content;
-
     private List<MultipartFile> images;
 }

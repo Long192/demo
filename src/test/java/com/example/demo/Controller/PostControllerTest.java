@@ -2,16 +2,11 @@ package com.example.demo.Controller;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Arrays;
-import java.util.Optional;
 
-import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.PostRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +27,9 @@ import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Post;
+import com.example.demo.Repository.PostRepository;
 import com.example.demo.Service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,10 +42,8 @@ public class PostControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @MockBean
     private PostService postService;
-
     @Mock
     private PostRepository postRepository;
 
