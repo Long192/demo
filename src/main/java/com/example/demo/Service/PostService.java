@@ -36,16 +36,17 @@ public class PostService {
     private FavouriteService favouriteService;
 
     @Transactional
-    public void createPost(CreatePostRequest request) throws Exception {
+    public Long createPost(CreatePostRequest request) throws Exception {
         Post post = new Post();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         post.setContent(request.getContent());
         post.setUser(user);
         post.setStatus(StatusEnum.active);
-        postRepository.save(post);
-        if (request.getImages() != null && !request.getImages().isEmpty()) {
-            imageService.upload(request.getImages(), post);
-        }
+        Post result = postRepository.save(post);
+//        if (request.getImages() != null && !request.getImages().isEmpty()) {
+//            imageService.upload(request.getImages(), post);
+//        }
+        return result.getId();
     }
 
     public Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
@@ -77,7 +78,7 @@ public class PostService {
     }
 
     @Transactional
-    public void editPost(Long id, UpdatePostRequest data) throws Exception {
+    public Long editPost(Long id, UpdatePostRequest data) throws Exception {
         Post post = postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!post.getUser().getId().equals(user.getId())) {
@@ -89,22 +90,24 @@ public class PostService {
         if (post.getContent() == null && post.getImages().isEmpty()) {
             throw new Exception("cannot delete all content and image");
         }
-        postRepository.save(post);
+        Post result = postRepository.save(post);
+
+        return result.getId();
     }
 
-    public void like(Long postId) throws Exception {
+    public Long like(Long postId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
         Post post = findById(postId);
         Optional<Favourite> favourite = favouriteService.findByUserIdAndPostId(user.getId(), post.getId());
         if (favourite.isPresent()) {
             favouriteService.delete(favourite.get());
-            return;
+            return null;
         }
 
         Favourite newFavourite = Favourite.builder().post(post).user(user).build();
 
-        favouriteService.save(newFavourite);
+        return favouriteService.save(newFavourite);
     }
 
     @Transactional

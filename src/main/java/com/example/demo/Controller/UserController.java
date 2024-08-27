@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.UpdateUserRequest;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.MessageResponse;
+import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Service.ExcelService;
@@ -70,19 +70,19 @@ public class UserController {
 
     @Operation(summary = "update user", description = "update user info")
     @PutMapping(value = "", consumes = {"multipart/form-data"})
-    public ResponseEntity<CustomResponse<MessageResponse>> updateUserInfoFormDat (
+    public ResponseEntity<CustomResponse<IdResponse>> updateUserInfoFormDat (
         @ModelAttribute UpdateUserRequest req
     ) throws Exception {
         userService.updateUser(req);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 
     @Operation(summary = "update user", description = "update user info")
     @PutMapping(value = "", consumes = {"application/json"})
-    public ResponseEntity<CustomResponse<MessageResponse>> updateUserInfoJsonData (
+    public ResponseEntity<CustomResponse<IdResponse>> updateUserInfoJsonData (
             @ModelAttribute UpdateUserRequest req
     ) throws Exception {
         userService.updateUser(req);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 }

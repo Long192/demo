@@ -20,13 +20,14 @@ public class CommentService {
     @Autowired
     private UserService userService;
 
-    public void addComment(AddCommentRequest request) throws Exception {
+    public Long addComment(AddCommentRequest request) throws Exception {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Comment comment = new Comment();
         comment.setContent(request.getContent());
         comment.setPost(postService.findById(request.getPostId()));
         comment.setUser(userService.findById(user.getId()));
-        commentRepository.save(comment);
+        Comment result = commentRepository.save(comment);
+        return result.getId();
     }
 
     public void removeComment(Long id) throws Exception {

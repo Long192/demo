@@ -10,9 +10,6 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MessageResponse {
-    @Builder.Default
-    private String message = "success";
-    @Builder.Default
-    private Boolean status = true;
+public class IdResponse {
+    private Long id;
 }

@@ -22,8 +22,9 @@ public class FavouriteService {
         return favouriteRepository.findByUserIdAndPostId(userId, PostId);
     }
 
-    public void save(Favourite favourite) {
-        favouriteRepository.save(favourite);
+    public Long save(Favourite favourite) {
+        Favourite result = favouriteRepository.save(favourite);
+        return result.getId();
     }
 
     public void delete(Favourite favourite){

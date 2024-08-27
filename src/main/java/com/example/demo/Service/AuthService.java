@@ -4,9 +4,11 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.example.demo.Model.RefreshToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -50,9 +52,11 @@ public class AuthService {
     @Autowired
     private UploadService uploadService;
     @Autowired
+    private RefreshService refreshService;
+    @Autowired
     private Environment environment;
 
-    public void signUp(SignUpRequest request) throws Exception {
+    public Long signUp(SignUpRequest request) throws Exception {
         User user = new User();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
         user.setEmail(request.getEmail());
@@ -68,7 +72,8 @@ public class AuthService {
         }
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
-        userRepository.save(user);
+        User result = userRepository.save(user);
+        return result.getId();
     }
 
     public LoginResponse login(GetTokenRequest request) throws Exception {
@@ -79,10 +84,12 @@ public class AuthService {
         }
         User user = userRepository.findById(otp.getUser().getId())
                 .orElseThrow(() -> new CustomException(404, "user not found"));
+        RefreshToken refreshToken = refreshService.findByUserId(user.getId());
         String jwt = jwtUtil.generateToken(user);
-        String refresh = jwtUtil.generateRefreshToken(new HashMap<>(), user);
         response.setToken(jwt);
-        response.setRefreshToken(refresh);
+        response.setRefreshToken(
+                refreshToken != null ? refreshToken.getRefreshToken() : refreshService.createRefreshToken(user)
+        );
         response.setId(user.getId());
         response.setAddress(user.getAddress());
         response.setDob(user.getDob() != null ? user.getDob().toString() : null);
@@ -127,7 +134,7 @@ public class AuthService {
         return urlResponse;
     }
 
-    public void resetPassword(String password, String id, String token) throws Exception {
+    public Long resetPassword(String password, String id, String token) throws Exception {
         User user =
                 userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new CustomException(404, "user not found"));
         ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
@@ -136,7 +143,8 @@ public class AuthService {
         if (validateResetPasswordToken(forgotPassword, token))
             throw new CustomException(404, "reset password request expired");
         user.setPassword(passwordEncoder.encode(password));
-        userRepository.save(user);
+        User result = userRepository.save(user);
+        return user.getId();
     }
 
     public LoginResponse refreshToken(String refreshToken) throws Exception {

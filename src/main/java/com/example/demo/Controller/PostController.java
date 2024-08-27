@@ -21,7 +21,7 @@ import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.MessageResponse;
+import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Model.Post;
@@ -79,47 +79,40 @@ public class PostController {
         return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(modelMapper.map(post, PostDto.class)).build());
     }
 
-    @Operation(summary = "add new post", description = "add a new post, use formdata if you want to upload file")
-    @PostMapping(value = "", consumes = {"multipart/form-data"})
-    public ResponseEntity<CustomResponse<MessageResponse>> createPostWithFormDataRequest(
-        @ModelAttribute @Valid CreatePostRequest request
-    ) throws Exception {
-        postService.createPost(request);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
-    }
-
-    @Operation(summary = "add new post", description = "add a new post, use formdata if you want to upload file")
-    @PostMapping(value = "", consumes = {"application/json"})
-    public ResponseEntity<CustomResponse<MessageResponse>> createPostWithJsonRequest(
+    @Operation(summary = "add new post", description = "add a new post")
+    @PostMapping("")
+    public ResponseEntity<CustomResponse<IdResponse>> createPostWithJsonRequest(
         @RequestBody @Valid CreatePostRequest request
     ) throws Exception {
-        postService.createPost(request);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
+                .data(new IdResponse(postService.createPost(request)))
+                .build());
     }
 
     @Operation(summary = "like post", description = "like a post")
     @PostMapping("/like")
-    public ResponseEntity<CustomResponse<MessageResponse>> likePost(
+    public ResponseEntity<CustomResponse<IdResponse>> likePost(
         @RequestBody @Valid LikeRequest request
     ) throws Exception {
         postService.like(request.getPostId());
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 
     @Operation(summary = "edit post", description = "edit a post by id")
-    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
-    public ResponseEntity<CustomResponse<MessageResponse>> editPost(
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomResponse<IdResponse>> editPost(
         @PathVariable Long id,
         @ModelAttribute @Valid UpdatePostRequest entity
     ) throws Exception {
-        postService.editPost(id, entity);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
+                .data(new IdResponse(postService.editPost(id, entity)))
+                .build());
     }
 
     @Operation(summary = "delete post", description = "delete a post by id")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<MessageResponse>> deletePost(@PathVariable Long id) throws Exception {
+    public ResponseEntity<CustomResponse<IdResponse>> deletePost(@PathVariable Long id) throws Exception {
         postService.deletePostById(id);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 }

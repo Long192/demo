@@ -21,8 +21,6 @@ public class JwtUtil {
     private final SecretKey secretKey;
     @Value("${spring.security.expired}")
     private Long expiration;
-    @Value("${spring.security.expired-refresh}")
-    private Long expirationRefresh;
 
     public JwtUtil(@Value("${spring.security.secret}") final String secret) {
         byte[] keyByte = Base64.getDecoder().decode(secret.getBytes(StandardCharsets.UTF_8));
@@ -32,13 +30,6 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder().subject(userDetails.getUsername()).issuedAt(new Date(System.currentTimeMillis()))
             .expiration(new Date(System.currentTimeMillis() + expiration)).signWith(secretKey).compact();
-    }
-
-    public String generateRefreshToken(HashMap<String, Object> claims, UserDetails userDetails) {
-        return Jwts.builder().claims(claims).subject(userDetails.getUsername())
-            .issuedAt(new Date(System.currentTimeMillis()))
-            .expiration(new Date(System.currentTimeMillis() + expirationRefresh))
-            .signWith(secretKey).compact();
     }
 
     public String extractUsername(String token) {

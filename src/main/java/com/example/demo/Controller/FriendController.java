@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.FriendRequest;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.MessageResponse;
+import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
@@ -70,9 +70,9 @@ public class FriendController {
 
     @Operation(summary = "add new friend", description = "add a new friend")
     @PostMapping("")
-    public ResponseEntity<CustomResponse<MessageResponse>> addFriend(@RequestBody @Valid FriendRequest request) throws Exception {
+    public ResponseEntity<CustomResponse<IdResponse>> addFriend(@RequestBody @Valid FriendRequest request) throws Exception {
         friendService.addFriend(request.getFriendId());
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 
     @Operation(summary = "list friend request", description = "list all friend request you received from other user")
@@ -92,16 +92,16 @@ public class FriendController {
 
     @Operation(summary = "accept friend request", description = "accept a friend request")
     @PostMapping("/accept-friend")
-    public ResponseEntity<CustomResponse<MessageResponse>> acceptFriendRequest(@RequestBody @Valid FriendRequest request)
+    public ResponseEntity<CustomResponse<IdResponse>> acceptFriendRequest(@RequestBody @Valid FriendRequest request)
         throws Exception {
         friendService.updateFriendStatus(request.getFriendId());
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 
     @Operation(summary = "delete friend", description = "delete a friend")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<MessageResponse> >deleteFriend(@PathVariable Long id) throws Exception {
+    public ResponseEntity<CustomResponse<IdResponse> >deleteFriend(@PathVariable Long id) throws Exception {
         friendService.removeFriend(id);
-        return ResponseEntity.ok(CustomResponse.<MessageResponse>builder().data(new MessageResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
     }
 }

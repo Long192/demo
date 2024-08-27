@@ -75,14 +75,6 @@ public class GlobalExceptionHandler<T> {
         return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler(value = DataIntegrityViolationException.class)
-    ResponseEntity<CustomResponse<T>> handlingDataIntegrityViolationException() {
-        CustomResponse<T> response = new CustomResponse<>();
-        response.setStatus(400);
-        response.setMessage("entity already exists");
-        return ResponseEntity.badRequest().body(response);
-    }
-
     @ExceptionHandler(value = SignatureException.class)
     ResponseEntity<CustomResponse<T>> handlingSignatureException() {
         CustomResponse<T> response = new CustomResponse<>();
