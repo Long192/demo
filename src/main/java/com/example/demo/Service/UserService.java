@@ -56,7 +56,7 @@ public class UserService implements UserDetailsService {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User userInfo = findById(me.getId());
 
-        if (req.getPassword() != null) {
+        if (req.getPassword() != null && !req.getPassword().isBlank()) {
             userInfo.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 

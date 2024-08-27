@@ -1,20 +1,22 @@
 package com.example.demo.Service;
 
-import com.example.demo.Model.Favourite;
-import com.example.demo.Model.Post;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.FavouriteRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.example.demo.Model.Favourite;
+import com.example.demo.Model.Post;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.FavouriteRepository;
 
 @SpringBootTest
 public class FavouriteServiceTest {

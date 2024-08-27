@@ -1,10 +1,12 @@
 package com.example.demo.Service;
 
-import com.example.demo.Model.Image;
-import com.example.demo.Model.Post;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.ImageRepository;
-import com.uploadcare.api.Client;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,11 +20,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.example.demo.Model.Image;
+import com.example.demo.Model.Post;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.ImageRepository;
+import com.uploadcare.api.Client;
 
 @SpringBootTest
 public class ImageServiceTest {
@@ -50,7 +52,7 @@ public class ImageServiceTest {
     public void setUp(){
         User user = User.builder().id(1L).email("email").fullname("fullname").build();
 
-        Authentication authentication =new UsernamePasswordAuthenticationToken(user, "password", user.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user, "password", user.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

@@ -19,7 +19,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -45,7 +44,6 @@ import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
 
 @SpringBootTest
-@AutoConfigureMockMvc
 public class AuthServiceTest {
     @InjectMocks
     private AuthService authService;

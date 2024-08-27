@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,9 +57,9 @@ public class PostServiceTest {
     private FavouriteService favouriteService;
 
     User user = User.builder().id(1L).email("email@email.com").build();
-    User user2 = User.builder().id(2L).email("email@email.com").build();
+    User user2 = User.builder().id(2L).email("email@email.com").likePosts(List.of()).build();
 
-    Post post1 = Post.builder().content("content1").user(user).build();
+    Post post1 = Post.builder().content("content1").user(user).likedByUsers(List.of()).build();
     Post post2 = Post.builder().content("content2").user(user).build();
     Post post3 = Post.builder().content("content3").user(user).build();
     Post post4 = Post.builder().content("content4").user(user2).build();
@@ -368,6 +369,7 @@ public class PostServiceTest {
     }
 
     @Test
+    @Transactional
     public void deletePostSuccess() throws Exception {
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(post1));
 
@@ -381,6 +383,28 @@ public class PostServiceTest {
 
         assertNotNull(postCaptured);
         assertEquals(postCaptured, post1);
+    }
+
+    @Test
+    @Transactional
+    public void deletePostSuccessWithLike() throws Exception {
+        User testUser = User.builder().id(2L).email("email@email.com").likePosts(List.of()).build();
+        Post testPost =
+                Post.builder().content("content1").user(user).likedByUsers(new ArrayList<>(List.of(testUser))).build();
+        testUser.setLikePosts(new ArrayList<>(List.of(testPost)));
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+
+        postService.deletePostById(1L);
+
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+
+        verify(postRepository, times(1)).delete(postCaptor.capture());
+
+        Post postCaptured = postCaptor.getValue();
+
+        assertNotNull(postCaptured);
+        assertEquals(postCaptured, testPost);
     }
 
     @Test

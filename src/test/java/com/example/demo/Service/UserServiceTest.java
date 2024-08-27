@@ -1,10 +1,12 @@
 package com.example.demo.Service;
 
-import com.example.demo.Dto.Request.UpdateUserRequest;
-import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.Image;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -24,12 +26,10 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import com.example.demo.Dto.Request.UpdateUserRequest;
+import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.UserRepository;
 
 @SpringBootTest
 public class UserServiceTest {
