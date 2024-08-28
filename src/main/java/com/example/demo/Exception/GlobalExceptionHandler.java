@@ -2,12 +2,12 @@ package com.example.demo.Exception;
 
 import java.net.MalformedURLException;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.demo.Dto.Response.CustomResponse;
@@ -64,6 +64,14 @@ public class GlobalExceptionHandler<T> {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
         response.setMessage("failed to upload image");
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<CustomResponse<T>> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        CustomResponse<T> response = new CustomResponse<>();
+        response.setStatus(400);
+        response.setMessage("image to large");
         return ResponseEntity.badRequest().body(response);
     }
 

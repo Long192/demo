@@ -2,13 +2,11 @@ package com.example.demo.Controller;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Model.Post;
@@ -42,7 +40,7 @@ public class PostController {
 
     @Operation(summary = "get posts", description = "get all paginated posts")
     @GetMapping("")
-    public ResponseEntity<CustomResponse<Page<PostDto>>> getPosts(
+    public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getPosts(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search,
@@ -52,13 +50,13 @@ public class PostController {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(
-            CustomResponse.<Page<PostDto>>builder().data(postService.findAndPaginate(pageable, search)).build()
+            CustomResponse.<CustomPage<PostDto>>builder().data(postService.findAndPaginate(pageable, search)).build()
         );
     }
 
     @Operation(summary = "get my post", description = "get all post of the currently logged in user")
     @GetMapping("/my-posts")
-    public ResponseEntity<CustomResponse<Page<PostDto>>> getMyPosts(
+    public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getMyPosts(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search,
@@ -68,7 +66,7 @@ public class PostController {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
         return ResponseEntity.ok(
-            CustomResponse.<Page<PostDto>>builder().data(postService.findMyPostsAndPaginate(pageable, search)).build()
+            CustomResponse.<CustomPage<PostDto>>builder().data(postService.findMyPostsAndPaginate(pageable, search)).build()
         );
     }
 
@@ -81,38 +79,35 @@ public class PostController {
 
     @Operation(summary = "add new post", description = "add a new post")
     @PostMapping("")
-    public ResponseEntity<CustomResponse<IdResponse>> createPostWithJsonRequest(
+    public ResponseEntity<CustomResponse<PostDto>> createPostWithJsonRequest(
         @RequestBody @Valid CreatePostRequest request
     ) throws Exception {
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
-                .data(new IdResponse(postService.createPost(request)))
+        return ResponseEntity.ok(CustomResponse.<PostDto>builder()
+                .data(postService.createPost(request))
                 .build());
     }
 
     @Operation(summary = "like post", description = "like a post")
     @PostMapping("/like")
-    public ResponseEntity<CustomResponse<IdResponse>> likePost(
+    public ResponseEntity<CustomResponse<PostDto>> likePost(
         @RequestBody @Valid LikeRequest request
     ) throws Exception {
-        postService.like(request.getPostId());
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(postService.like(request.getPostId())).build());
     }
 
     @Operation(summary = "edit post", description = "edit a post by id")
     @PutMapping("/{id}")
-    public ResponseEntity<CustomResponse<IdResponse>> editPost(
+    public ResponseEntity<CustomResponse<PostDto>> editPost(
         @PathVariable Long id,
-        @ModelAttribute @Valid UpdatePostRequest entity
+        @RequestBody @Valid UpdatePostRequest entity
     ) throws Exception {
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
-                .data(new IdResponse(postService.editPost(id, entity)))
-                .build());
+        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(postService.editPost(id, entity)).build());
     }
 
     @Operation(summary = "delete post", description = "delete a post by id")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<IdResponse>> deletePost(@PathVariable Long id) throws Exception {
+    public ResponseEntity<CustomResponse<?>> deletePost(@PathVariable Long id) throws Exception {
         postService.deletePostById(id);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(new CustomResponse<>());
     }
 }

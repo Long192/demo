@@ -3,6 +3,8 @@ package com.example.demo.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -11,7 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.FriendStatusEnum;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Friend;
@@ -26,18 +30,21 @@ public class FriendService {
     private FriendRepository friendRepository;
     @Autowired
     private PostService postService;
+    @Autowired
+    private ModelMapper mapper;
 
-    public Page<PostDto> getFriendPost(Pageable pageable) throws Exception {
+    public CustomPage<PostDto> getFriendPost(Pageable pageable) throws Exception {
         List<Long> friendIds = new ArrayList<>();
         getAllFriend().forEach(user -> friendIds.add(user.getId()));
         try {
-            return postService.findByUserIdsOrderByCreatedAt(friendIds, pageable);
+            return mapper.map(postService.findByUserIdsOrderByCreatedAt(friendIds, pageable),
+                    new TypeToken<CustomPage<PostDto>>() {}.getType());
         } catch (InvalidDataAccessApiUsageException e) {
             throw new Exception("wrong sort by");
         }
     }
 
-    public void addFriend(Long friendId) throws Exception {
+    public UserDto addFriend(Long friendId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
         User friend = userService.findById(friendId);
@@ -48,10 +55,11 @@ public class FriendService {
         friendShip.setFriendRequester(user);
         friendShip.setFriendReceiver(friend);
         friendShip.setStatus(FriendStatusEnum.pending);
-        friendRepository.save(friendShip);
+        Friend result = friendRepository.save(friendShip);
+        return mapper.map(result.getFriendReceiver(), UserDto.class);
     }
 
-    public void updateFriendStatus(Long requesterId) throws Exception {
+    public UserDto updateFriendStatus(Long requesterId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Friend friend = friendRepository.findByFriendRequesterAndFriendReceiver(requesterId, me.getId())
                 .orElseThrow(() -> new CustomException(404, "friend not found"));
@@ -61,7 +69,8 @@ public class FriendService {
         }
         
         friend.setStatus(FriendStatusEnum.accepted);
-        friendRepository.save(friend);
+        Friend result = friendRepository.save(friend);
+        return mapper.map(result.getFriendRequester(), UserDto.class);
     }
 
     public void removeFriend(Long friendId) throws Exception {
@@ -71,23 +80,25 @@ public class FriendService {
         friendRepository.delete(friend);
     }
 
-    public Page<User> getFriends(Pageable pageable, String search) throws Exception {
+    public CustomPage<UserDto> getFriends(Pageable pageable, String search) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             Page<Friend> friends = friendRepository.findFriends(userToken.getId(), search, pageable);
             List<User> users = friendToUser(friends.getContent(), userToken.getId());
-            return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
+            return mapper.map(new PageImpl<>(users, friends.getPageable(), friends.getTotalPages()),
+                    new TypeToken<CustomPage<UserDto>>(){}.getType());
         } catch (InvalidDataAccessApiUsageException e) {
             throw new Exception("wrong sort by");
         }
     }
 
-    public Page<User> getFriendRequests(Pageable pageable) throws Exception {
+    public CustomPage<UserDto> getFriendRequests(Pageable pageable) throws Exception {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
             Page<Friend> friends = friendRepository.findFriendRequests(userToken.getId(), pageable);
             List<User> users = friendToUser(friends.getContent(), userToken.getId());
-            return new PageImpl<>(users, friends.getPageable(), friends.getTotalPages());
+            return mapper.map( new PageImpl<>(users, friends.getPageable(), friends.getTotalPages()),
+                    new TypeToken<CustomPage<UserDto>>(){}.getType());
         }catch(InvalidDataAccessApiUsageException e) {
             throw new Exception("wrong sort by");
         }

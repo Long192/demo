@@ -22,9 +22,9 @@ public class FavouriteService {
         return favouriteRepository.findByUserIdAndPostId(userId, PostId);
     }
 
-    public Long save(Favourite favourite) {
+    public Favourite save(Favourite favourite) {
         Favourite result = favouriteRepository.save(favourite);
-        return result.getId();
+        return result;
     }
 
     public void delete(Favourite favourite){

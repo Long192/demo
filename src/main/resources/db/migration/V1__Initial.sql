@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS friend
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_requester_id BIGINT,
     user_receiver_id BIGINT,
+    status ENUM("pending", "accepted") DEFAULT "pending",
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY(user_requester_id) REFERENCES user(id),

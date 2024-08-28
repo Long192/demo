@@ -1,8 +1,6 @@
 package com.example.demo.Controller;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.FriendRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
@@ -32,8 +30,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/friend")
 public class FriendController {
     @Autowired
-    private ModelMapper mapper;
-    @Autowired
     private FriendService friendService;
 
     @Operation(
@@ -41,7 +37,7 @@ public class FriendController {
         description = "get a list of friends based on the token of the currently logged in user"
     )
     @GetMapping("")
-    public ResponseEntity<CustomResponse<Page<UserDto>>> getFriend(
+    public ResponseEntity<CustomResponse<CustomPage<UserDto>>> getFriend(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search,
@@ -50,34 +46,34 @@ public class FriendController {
     ) throws Exception {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
-        Page<UserDto> friendList =
-            friendService.getFriends(pageable, search).map(source -> mapper.map(source, UserDto.class));
-        return ResponseEntity.ok(CustomResponse.<Page<UserDto>>builder().data(friendList).build());
+        return ResponseEntity.ok(CustomResponse.<CustomPage<UserDto>>builder()
+                .data(friendService.getFriends(pageable, search))
+                .build());
     }
 
     @Operation(summary = "get friend post", description = "get a list of friends' posts from 1 week ago to the present")
     @GetMapping("/friend-posts")
-    public ResponseEntity<CustomResponse<Page<PostDto>>> getFriendPost(
+    public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getFriendPost(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "id") String sortBy
     ) throws Exception {
         PageRequest pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(
-            CustomResponse.<Page<PostDto>>builder().data(friendService.getFriendPost(pageable)).build()
+            CustomResponse.<CustomPage<PostDto>>builder().data(friendService.getFriendPost(pageable)).build()
         );
     }
 
     @Operation(summary = "add new friend", description = "add a new friend")
     @PostMapping("")
-    public ResponseEntity<CustomResponse<IdResponse>> addFriend(@RequestBody @Valid FriendRequest request) throws Exception {
-        friendService.addFriend(request.getFriendId());
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+    public ResponseEntity<CustomResponse<UserDto>> addFriend(@RequestBody @Valid FriendRequest request) throws Exception {
+        return ResponseEntity.ok(CustomResponse.<UserDto>builder()
+                .data(friendService.addFriend(request.getFriendId())).build());
     }
 
     @Operation(summary = "list friend request", description = "list all friend request you received from other user")
     @GetMapping("/friend-request")
-    public ResponseEntity<CustomResponse<Page<UserDto>>> getFriendRequest(
+    public ResponseEntity<CustomResponse<CustomPage<UserDto>>> getFriendRequest(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "id") String sortBy,
@@ -85,23 +81,23 @@ public class FriendController {
     ) throws Exception {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        Page<UserDto> friendList =
-                friendService.getFriendRequests(pageRequest).map(source -> mapper.map(source, UserDto.class));
-        return ResponseEntity.ok(CustomResponse.<Page<UserDto>>builder().data(friendList).build());
+        return ResponseEntity.ok(CustomResponse.<CustomPage<UserDto>>builder()
+                .data(friendService.getFriendRequests(pageRequest))
+                .build());
     }
 
     @Operation(summary = "accept friend request", description = "accept a friend request")
     @PostMapping("/accept-friend")
-    public ResponseEntity<CustomResponse<IdResponse>> acceptFriendRequest(@RequestBody @Valid FriendRequest request)
+    public ResponseEntity<CustomResponse<UserDto>> acceptFriendRequest(@RequestBody @Valid FriendRequest request)
         throws Exception {
-        friendService.updateFriendStatus(request.getFriendId());
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<UserDto>builder()
+                .data(friendService.updateFriendStatus(request.getFriendId())).build());
     }
 
     @Operation(summary = "delete friend", description = "delete a friend")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<IdResponse> >deleteFriend(@PathVariable Long id) throws Exception {
+    public ResponseEntity<CustomResponse<?> >deleteFriend(@PathVariable Long id) throws Exception {
         friendService.removeFriend(id);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(new CustomResponse<>());
     }
 }

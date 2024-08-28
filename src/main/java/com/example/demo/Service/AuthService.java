@@ -3,13 +3,12 @@ package com.example.demo.Service;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.example.demo.Model.RefreshToken;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -17,17 +16,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.Dto.Data.CacheOtp;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
 import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
 import com.example.demo.Dto.Response.OtpDto;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.RoleEnum;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.ForgotPassword;
 import com.example.demo.Model.Otp;
+import com.example.demo.Model.RefreshToken;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.ForgotPasswordRepository;
 import com.example.demo.Repository.OtpRepository;
@@ -54,9 +56,13 @@ public class AuthService {
     @Autowired
     private RefreshService refreshService;
     @Autowired
+    private CacheManager cacheManager;
+    @Autowired
+    private ModelMapper mapper;
+    @Autowired
     private Environment environment;
 
-    public Long signUp(SignUpRequest request) throws Exception {
+    public UserDto signUp(SignUpRequest request) throws Exception {
         User user = new User();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
         user.setEmail(request.getEmail());
@@ -68,12 +74,15 @@ public class AuthService {
             user.setAvatar(uploadService.uploadAndGetUrl(request.getAvatar()));
         }
         if (request.getDob() != null && !request.getDob().isBlank()) {
+            if(dateFormat.parse(request.getDob()).getTime() > System.currentTimeMillis()) {
+                throw new CustomException(400, "Dob invalid");
+            }
             user.setDob(new Date(dateFormat.parse(request.getDob()).getTime()));
         }
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
         User result = userRepository.save(user);
-        return result.getId();
+        return mapper.map(result, UserDto.class);
     }
 
     public LoginResponse login(GetTokenRequest request) throws Exception {
@@ -88,7 +97,7 @@ public class AuthService {
         String jwt = jwtUtil.generateToken(user);
         response.setToken(jwt);
         response.setRefreshToken(
-                refreshToken != null ? refreshToken.getRefreshToken() : refreshService.createRefreshToken(user)
+                refreshToken != null ? refreshToken.getToken() : refreshService.createRefreshToken(user)
         );
         response.setId(user.getId());
         response.setAddress(user.getAddress());
@@ -109,13 +118,15 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         OtpDto otpDto = new OtpDto();
-        Otp otp = new Otp();
-        otp.setOtp(AppUtils.generateOtp());
-        otp.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-        otp.setUser(user);
-        otpRepository.save(otp);
-        otpDto.setOtp(otp.getOtp());
-        otpDto.setUserId(otp.getUser().getId());
+        CacheOtp cacheOtp = CacheOtp.builder()
+                .userId(user.getId())
+                .otp(AppUtils.generateOtp())
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
+                .tryNumber(1)
+                .build();
+        cacheManager.getCache("otpCache").put(user.getId(), cacheOtp);
+        otpDto.setOtp(cacheOtp.getOtp());
+        otpDto.setUserId(cacheOtp.getUserId());
         return otpDto;
     }
 
@@ -134,7 +145,7 @@ public class AuthService {
         return urlResponse;
     }
 
-    public Long resetPassword(String password, String id, String token) throws Exception {
+    public void resetPassword(String password, String id, String token) throws Exception {
         User user =
                 userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new CustomException(404, "user not found"));
         ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
@@ -143,17 +154,13 @@ public class AuthService {
         if (validateResetPasswordToken(forgotPassword, token))
             throw new CustomException(404, "reset password request expired");
         user.setPassword(passwordEncoder.encode(password));
-        User result = userRepository.save(user);
-        return user.getId();
+        userRepository.save(user);
     }
 
     public LoginResponse refreshToken(String refreshToken) throws Exception {
         LoginResponse response = new LoginResponse();
-        if (jwtUtil.isTokenExpired(refreshToken)) {
-            throw new CustomException(403, "refreshToken expired");
-        }
-        String email = jwtUtil.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
+        RefreshToken refresh = refreshService.findByToken(refreshToken);
+        User user = refresh.getUser();
         String token = jwtUtil.generateToken(user);
         response.setToken(token);
         return response;

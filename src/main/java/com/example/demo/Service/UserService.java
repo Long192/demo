@@ -3,6 +3,7 @@ package com.example.demo.Service;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.Dto.Request.UpdateUserRequest;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.UserRepository;
@@ -29,6 +31,8 @@ public class UserService implements UserDetailsService {
     private UploadService uploadService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private ModelMapper mapper;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -52,7 +56,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public void updateUser(UpdateUserRequest req) throws Exception {
+    public UserDto updateUser(UpdateUserRequest req) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User userInfo = findById(me.getId());
 
@@ -81,6 +85,7 @@ public class UserService implements UserDetailsService {
             userInfo.setAddress(req.getAddress());
         }
    
-        userRepository.save(userInfo);
+        User user = userRepository.save(userInfo);
+        return mapper.map(user, UserDto.class);
     }
 }

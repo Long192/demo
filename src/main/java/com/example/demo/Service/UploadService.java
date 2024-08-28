@@ -1,20 +1,22 @@
 package com.example.demo.Service;
 
-import com.uploadcare.api.Client;
-import com.uploadcare.upload.FileUploader;
-import com.uploadcare.upload.Uploader;
-import com.uploadcare.urls.CdnPathBuilder;
-import com.uploadcare.urls.Urls;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Objects;
+
+import javax.imageio.ImageIO;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.uploadcare.api.Client;
+import com.uploadcare.upload.FileUploader;
+import com.uploadcare.upload.Uploader;
+import com.uploadcare.urls.CdnPathBuilder;
+import com.uploadcare.urls.Urls;
 
 @Service
 public class UploadService {

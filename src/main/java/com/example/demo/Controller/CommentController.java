@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.AddCommentRequest;
 import com.example.demo.Dto.Request.UpdateCommentRequest;
+import com.example.demo.Dto.Response.CommentDto;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Service.CommentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,28 +29,26 @@ public class CommentController {
 
     @Operation(summary = "new comment", description = "add new comment for a posts")
     @PostMapping("")
-    public ResponseEntity<CustomResponse<IdResponse>> postMethodName(
+    public ResponseEntity<CustomResponse<CommentDto>> postMethodName(
         @RequestBody @Valid AddCommentRequest request
     ) throws Exception {
-        commentService.addComment(request);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<CommentDto>builder().data(commentService.addComment(request)).build());
     }
 
     @Operation(summary = "delete comment", description = "delete a comment")
     @DeleteMapping("/{id}")
-    public ResponseEntity<CustomResponse<IdResponse>> deleteComment(@PathVariable Long id) throws Exception {
+    public ResponseEntity<CustomResponse<?>> deleteComment(@PathVariable Long id) throws Exception {
         commentService.removeComment(id);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(new CustomResponse<>());
     }
 
     @Operation(summary = "edit comment", description = "edit a comment")
     @PutMapping("/{id}")
-    public ResponseEntity<CustomResponse<IdResponse>> editComment(
+    public ResponseEntity<CustomResponse<CommentDto>> editComment(
         @PathVariable Long id,
         @RequestBody @Valid UpdateCommentRequest req
     ) throws Exception {
-        commentService.editComment(id, req);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+        return ResponseEntity.ok(CustomResponse.<CommentDto>builder().data(commentService.editComment(id, req)).build());
     }
 
 }

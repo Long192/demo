@@ -2,7 +2,6 @@ package com.example.demo.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +17,8 @@ import com.example.demo.Dto.Request.SignUpRequest;
 import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.ForgotPasswordResponse;
 import com.example.demo.Dto.Response.LoginResponse;
-import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.OtpDto;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,12 +34,10 @@ public class AuthController {
 
     @Operation(summary = "signup",description = "sign up with email and password")
     @PostMapping(value = "/signup", consumes = {"application/json"})
-    public ResponseEntity<CustomResponse<IdResponse>> signupJson(
+    public ResponseEntity<CustomResponse<UserDto>> signup(
         @RequestBody @Valid SignUpRequest request
     ) throws Exception {
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
-                .data(new IdResponse(authService.signUp(request)))
-                .build());
+        return ResponseEntity.ok(CustomResponse.<UserDto>builder().data(authService.signUp(request)).build());
     }
 
     @Operation(summary = "login",description = "login with email and password to get login otp")
@@ -82,13 +79,12 @@ public class AuthController {
 
     @Operation(summary = "reset password", description = "reset password with url get form forgot password request")
     @PostMapping("/reset-password")
-    public ResponseEntity<CustomResponse<IdResponse>> password(
+    public ResponseEntity<CustomResponse<?>> resetPassword(
         @RequestBody @Valid ResetPasswordRequest request,
         @RequestParam String userId,
         @RequestParam String token
     ) throws Exception {
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder()
-                .data(new IdResponse(authService.resetPassword(request.getPassword(), userId, token)))
-                .build());
+        authService.resetPassword(request.getPassword(), userId, token);
+        return ResponseEntity.ok(new CustomResponse<>());
     }
 }

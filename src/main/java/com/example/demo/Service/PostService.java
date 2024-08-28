@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
@@ -36,17 +38,14 @@ public class PostService {
     private FavouriteService favouriteService;
 
     @Transactional
-    public Long createPost(CreatePostRequest request) throws Exception {
+    public PostDto createPost(CreatePostRequest request) throws Exception {
         Post post = new Post();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         post.setContent(request.getContent());
         post.setUser(user);
         post.setStatus(StatusEnum.active);
         Post result = postRepository.save(post);
-//        if (request.getImages() != null && !request.getImages().isEmpty()) {
-//            imageService.upload(request.getImages(), post);
-//        }
-        return result.getId();
+        return modelMapper.map(result, PostDto.class);
     }
 
     public Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
@@ -54,20 +53,20 @@ public class PostService {
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
 
-    public Page<PostDto> findAndPaginate(Pageable pageable, String textSearch) throws Exception {
+    public CustomPage<PostDto> findAndPaginate(Pageable pageable, String textSearch) throws Exception {
         try{
             Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
-            return postPage.map(source -> modelMapper.map(source, PostDto.class));
+            return  modelMapper.map(postPage, new TypeToken<CustomPage<PostDto>>() {}.getType());
         }catch (InvalidDataAccessApiUsageException e){
             throw new Exception("wrong sort by");
         }
     }
 
-    public Page<PostDto> findMyPostsAndPaginate(Pageable pageable, String search) throws Exception {
+    public CustomPage<PostDto> findMyPostsAndPaginate(Pageable pageable, String search) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try{
             Page<Post> postPage = postRepository.getPostByUserIdAndSearch(me.getId(), pageable, search);
-            return postPage.map(source -> modelMapper.map(source, PostDto.class));
+            return modelMapper.map(postPage, new TypeToken<CustomPage<PostDto>>() {}.getType());
         }catch(InvalidDataAccessApiUsageException e){
             throw new Exception("wrong sort by");
         }
@@ -78,7 +77,7 @@ public class PostService {
     }
 
     @Transactional
-    public Long editPost(Long id, UpdatePostRequest data) throws Exception {
+    public PostDto editPost(Long id, UpdatePostRequest data) throws Exception {
         Post post = postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (!post.getUser().getId().equals(user.getId())) {
@@ -92,10 +91,10 @@ public class PostService {
         }
         Post result = postRepository.save(post);
 
-        return result.getId();
+        return modelMapper.map(result, PostDto.class);
     }
 
-    public Long like(Long postId) throws Exception {
+    public PostDto like(Long postId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
         Post post = findById(postId);
@@ -107,7 +106,8 @@ public class PostService {
 
         Favourite newFavourite = Favourite.builder().post(post).user(user).build();
 
-        return favouriteService.save(newFavourite);
+        return modelMapper.map(favouriteService.save(newFavourite), PostDto.class);
+        
     }
 
     @Transactional

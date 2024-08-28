@@ -1,16 +1,16 @@
 package com.example.demo.Service;
 
-import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.RefreshToken;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.RefreshRepository;
+import java.sql.Timestamp;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.sql.Ref;
-import java.sql.Timestamp;
-import java.util.UUID;
+import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.RefreshToken;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.RefreshRepository;
 
 @Service
 public class RefreshService {
@@ -23,14 +23,18 @@ public class RefreshService {
 
     public String createRefreshToken(User user) {
         RefreshToken refresh =  RefreshToken.builder()
-                .refreshToken(UUID.randomUUID().toString())
+                .token(UUID.randomUUID().toString())
                 .user(user)
                 .expiredAt(new Timestamp(System.currentTimeMillis() + expiredRefresh))
                 .build();
 
         RefreshToken result = refreshRepository.save(refresh);
 
-        return result.getRefreshToken();
+        return result.getToken();
+    }
+
+    public RefreshToken findByToken(String token) throws Exception {
+        return refreshRepository.findByToken(token).orElseThrow(() -> new CustomException(404, "token invalid"));
     }
 
     public RefreshToken findByUserId(Long id) {

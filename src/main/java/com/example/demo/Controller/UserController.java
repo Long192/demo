@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Dto.Request.UpdateUserRequest;
 import com.example.demo.Dto.Response.CustomResponse;
-import com.example.demo.Dto.Response.IdResponse;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Service.ExcelService;
 import com.example.demo.Service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -52,8 +51,7 @@ public class UserController {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
         Page<UserDto> users = userService.findAll(pageable, search).map(source -> mapper.map(source, UserDto.class));
-        return ResponseEntity.ok(CustomResponse.<Page<UserDto>>builder()
-            .data(users).build());
+        return ResponseEntity.ok(CustomResponse.<Page<UserDto>>builder().data(users).build());
     }
 
     @Operation(summary = "report", description = "export excel file to show how many new post, like, comment, friend current logged in user have in previous week ")
@@ -69,20 +67,8 @@ public class UserController {
     }
 
     @Operation(summary = "update user", description = "update user info")
-    @PutMapping(value = "", consumes = {"multipart/form-data"})
-    public ResponseEntity<CustomResponse<IdResponse>> updateUserInfoFormDat (
-        @ModelAttribute UpdateUserRequest req
-    ) throws Exception {
-        userService.updateUser(req);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
-    }
-
-    @Operation(summary = "update user", description = "update user info")
-    @PutMapping(value = "", consumes = {"application/json"})
-    public ResponseEntity<CustomResponse<IdResponse>> updateUserInfoJsonData (
-            @ModelAttribute UpdateUserRequest req
-    ) throws Exception {
-        userService.updateUser(req);
-        return ResponseEntity.ok(CustomResponse.<IdResponse>builder().data(new IdResponse()).build());
+    @PutMapping("")
+    public ResponseEntity<CustomResponse<UserDto>> updateUserInfo (@RequestBody UpdateUserRequest req) throws Exception {
+        return ResponseEntity.ok(CustomResponse.<UserDto>builder().data(userService.updateUser(req)).build());
     }
 }
