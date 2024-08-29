@@ -1,14 +1,13 @@
 package com.example.demo.Dto.Request;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.hibernate.validator.constraints.URL;
+import org.springframework.format.annotation.DateTimeFormat;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,12 +29,12 @@ public class SignUpRequest {
     private String password;
     @Size(max = 50, message = "fullname max {max} character")
     private String fullname;
-    private MultipartFile avatar;
+    @URL(message = "avatar invalid")
+    private String avatar;
     @Size(max = 100, message = "address max {max} character")
     private String address;
     @Size(max = 100, message = "etc max {max} character")
     private String etc;
-    @JsonFormat(pattern = "yyyy/MM/dd")
-    @Pattern(regexp = "^\\d{4}/\\d{2}/\\d{2}$", message = "Dob must be yyyy/MM/dd format")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private String dob;
 }

@@ -1,6 +1,6 @@
 package com.example.demo.Dto.Request;
 
-import org.springframework.web.multipart.MultipartFile;
+import org.hibernate.validator.constraints.URL;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -18,9 +18,10 @@ public class UpdateUserRequest {
     @Size(min = 6, message = "password need at least 6 character")
     private String password;
     private String fullname;
-    private MultipartFile avatar;
+    @URL(message = "url invalid")
+    private String avatar;
     private String address;
     private String etc;
-    @JsonFormat(pattern = "yyyy/MM/dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private String dob;
 }

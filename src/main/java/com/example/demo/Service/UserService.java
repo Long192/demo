@@ -28,8 +28,6 @@ public class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private UploadService uploadService;
-    @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ModelMapper mapper;
@@ -69,8 +67,8 @@ public class UserService implements UserDetailsService {
             userInfo.setDob(new Date(sdf.parse(req.getDob()).getTime()));
         }
 
-        if(req.getAvatar() != null && !req.getAvatar().isEmpty()){
-            userInfo.setAvatar(uploadService.uploadAndGetUrl(req.getAvatar()));
+        if(req.getAvatar() != null && !req.getAvatar().isBlank()){
+            userInfo.setAvatar(req.getAvatar());
         }
 
         if(req.getFullname() != null && !req.getFullname().isBlank()){

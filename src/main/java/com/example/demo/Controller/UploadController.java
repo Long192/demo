@@ -11,13 +11,17 @@ import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.UploadResponse;
 import com.example.demo.Service.UploadService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "upload", description = "upload")
 @RestController
 @RequestMapping("/upload")
 public class UploadController {
     @Autowired
     private UploadService uploadService;
 
+    @Operation(summary = "upload", description = " image to upload care and get image url")
     @PostMapping(value = "", consumes = {"multipart/form-data"})
     public CustomResponse<UploadResponse> postMethodName(@ModelAttribute UploadRequest req) throws Exception {
         return CustomResponse.<UploadResponse>builder()

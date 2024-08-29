@@ -2,12 +2,15 @@ package com.example.demo.Service;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +19,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.Dto.Data.CacheOtp;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
 import com.example.demo.Dto.Request.SignUpRequest;
@@ -32,7 +34,6 @@ import com.example.demo.Model.Otp;
 import com.example.demo.Model.RefreshToken;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.ForgotPasswordRepository;
-import com.example.demo.Repository.OtpRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
@@ -42,8 +43,6 @@ public class AuthService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private OtpRepository otpRepository;
-    @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -51,8 +50,6 @@ public class AuthService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private ForgotPasswordRepository forgotPasswordRepository;
-    @Autowired
-    private UploadService uploadService;
     @Autowired
     private RefreshService refreshService;
     @Autowired
@@ -63,21 +60,26 @@ public class AuthService {
     private Environment environment;
 
     public UserDto signUp(SignUpRequest request) throws Exception {
+        
         User user = new User();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEtc(request.getEtc());
         user.setRole(RoleEnum.user);
         user.setFullname(request.getFullname());
-        if (request.getAvatar() != null) {
-            user.setAvatar(uploadService.uploadAndGetUrl(request.getAvatar()));
-        }
-        if (request.getDob() != null && !request.getDob().isBlank()) {
-            if(dateFormat.parse(request.getDob()).getTime() > System.currentTimeMillis()) {
-                throw new CustomException(400, "Dob invalid");
+        user.setAvatar(request.getAvatar());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        dateFormat.setLenient(false);
+        try {
+            if (request.getDob() != null && !request.getDob().isBlank()) {
+                java.util.Date date = dateFormat.parse(request.getDob());
+                if(date.after(new java.util.Date())) {
+                    throw new CustomException(400, "Dob invalid");
+                }
+                user.setDob(new Date(date.getTime()));
             }
-            user.setDob(new Date(dateFormat.parse(request.getDob()).getTime()));
+        } catch (ParseException  e) {
+            throw new CustomException(400, "Dob invalid");
         }
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
@@ -87,11 +89,29 @@ public class AuthService {
 
     public LoginResponse login(GetTokenRequest request) throws Exception {
         LoginResponse response = new LoginResponse();
-        Otp otp = otpRepository.findTopByOtpAndUserIdOrderByUserIdDesc(request.getOtp(), request.getUserId());
-        if (otp == null || !validateOtp(otp)) {
-            throw new BadCredentialsException("otp or user invalid");
+        Otp otp = null;
+        Cache cache = cacheManager.getCache("otpCache");
+        if(cache == null){
+            throw new CustomException(500, "serverError");
         }
-        User user = userRepository.findById(otp.getUser().getId())
+
+        otp = cache.get(request.getUserId(), Otp.class);
+
+        if (otp == null || !validateOtp(otp)) {
+            throw new BadCredentialsException("login request not found");
+        }
+
+        if(!otp.getOtp().equals(request.getOtp()) ){
+            if(otp.getTryNumber() == 1){
+                cache.evict(otp.getUserId());
+                throw new CustomException(400, "Too many attempts. Please try again later");
+            }
+            otp.setTryNumber(otp.getTryNumber() - 1);
+            cache.put(otp.getUserId(), otp);
+            throw new CustomException(400, "otp invalid " + otp.getTryNumber() + " attempts left");
+        }
+
+        User user = userRepository.findById(otp.getUserId())
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         RefreshToken refreshToken = refreshService.findByUserId(user.getId());
         String jwt = jwtUtil.generateToken(user);
@@ -104,7 +124,7 @@ public class AuthService {
         response.setDob(user.getDob() != null ? user.getDob().toString() : null);
         response.setEmail(user.getEmail());
         response.setFullname(user.getFullname());
-        otpRepository.deleteById(otp.getId());
+        cache.evict(user.getId());
         return response;
     }
 
@@ -118,13 +138,17 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         OtpDto otpDto = new OtpDto();
-        CacheOtp cacheOtp = CacheOtp.builder()
+        Otp cacheOtp = Otp.builder()
                 .userId(user.getId())
                 .otp(AppUtils.generateOtp())
-                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)))
-                .tryNumber(1)
+                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .tryNumber(5)
                 .build();
-        cacheManager.getCache("otpCache").put(user.getId(), cacheOtp);
+        Cache cache = cacheManager.getCache("otpCache");
+        if(cache == null){
+            throw new CustomException(500, "server Error");
+        }
+        cache.put(user.getId(), cacheOtp);
         otpDto.setOtp(cacheOtp.getOtp());
         otpDto.setUserId(cacheOtp.getUserId());
         return otpDto;
@@ -167,7 +191,7 @@ public class AuthService {
     }
 
     private boolean validateOtp(Otp otp) {
-        return otp.getExpiredAt().after(new Timestamp(System.currentTimeMillis()));
+        return otp.getExpiredAt().isAfter(LocalDateTime.now());
     }
 
     private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {

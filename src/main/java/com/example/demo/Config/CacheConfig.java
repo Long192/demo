@@ -1,17 +1,23 @@
 package com.example.demo.Config;
 
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
-@Cacheable
-public class CacheConfig {
+import com.github.benmanes.caffeine.cache.Caffeine;
 
+@Configuration
+@EnableCaching
+public class CacheConfig {
     @Bean
-    public ConcurrentMapCacheManager cacheManager(){
-        return new ConcurrentMapCacheManager("otpCache");
+    public CacheManager cacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("otpCache");
+        cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).maximumSize(10));
+        return cacheManager;
     }
 
 }
