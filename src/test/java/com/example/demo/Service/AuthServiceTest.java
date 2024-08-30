@@ -81,7 +81,7 @@ public class AuthServiceTest {
     public void SignupTestSuccess() throws Exception {
         MockMultipartFile file =
                 new MockMultipartFile("avatar", "avatar.jpeg", MediaType.IMAGE_JPEG_VALUE, "avatar".getBytes());
-        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         SignUpRequest req = SignUpRequest.builder().email("email@testemail.com").password("password").etc("etc")
                 .address("address").fullname("fullname").dob("2002/01/09").build();
         User user = User.builder().email(req.getEmail()).password(req.getPassword()).etc(req.getEtc())

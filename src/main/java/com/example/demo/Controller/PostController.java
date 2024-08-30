@@ -110,4 +110,18 @@ public class PostController {
         postService.deletePostById(id);
         return ResponseEntity.ok(new CustomResponse<>());
     }
+
+    
+    @Operation(summary = "get friend post", description = "get a list of friends posts from 1 week ago to the present")
+    @GetMapping("/friend-posts")
+    public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getFriendPost(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sortBy
+    ) throws Exception {
+        PageRequest pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(
+            CustomResponse.<CustomPage<PostDto>>builder().data(postService.getFriendPost(pageable)).build()
+        );
+    }
 }

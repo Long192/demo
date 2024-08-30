@@ -1,6 +1,7 @@
 package com.example.demo.Service;
 
 import java.sql.Date;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import org.modelmapper.ModelMapper;
@@ -57,14 +58,19 @@ public class UserService implements UserDetailsService {
     public UserDto updateUser(UpdateUserRequest req) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User userInfo = findById(me.getId());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        sdf.setLenient(false);
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             userInfo.setPassword(passwordEncoder.encode(req.getPassword()));
         }
 
         if(req.getDob() != null && !req.getDob().isBlank()){
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-            userInfo.setDob(new Date(sdf.parse(req.getDob()).getTime()));
+            try{
+                userInfo.setDob(new Date(sdf.parse(req.getDob()).getTime()));
+            }catch(ParseException e){
+                throw new CustomException(400, "Dob");
+            }
         }
 
         if(req.getAvatar() != null && !req.getAvatar().isBlank()){

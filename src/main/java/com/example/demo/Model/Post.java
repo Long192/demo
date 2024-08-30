@@ -6,7 +6,7 @@ import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Enum.PostStatusEnum;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -48,7 +48,7 @@ public class Post {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    private PostStatusEnum status;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL,  orphanRemoval = true)
     private List<Comment> comments;

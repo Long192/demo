@@ -2,11 +2,10 @@ package com.example.demo.Dto.Request;
 
 import java.util.List;
 
-import org.springframework.web.multipart.MultipartFile;
-
-import com.example.demo.Enum.StatusEnum;
+import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,9 +17,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdatePostRequest {
     @NotNull(message = "content required")
+    @Size(max = 3000, message = "content max {max} characters")
     private String content;
-    private List<MultipartFile> images;
-    private List<String> removeImages;
+    @NotNull(message = "images required")
+    private List<@URL(message = "invalid images url") @Size(max = 255, message = "image url max {max} characters") String> images;
     @NotNull(message = "status required")
-    private StatusEnum status;
+    private String status;
 }

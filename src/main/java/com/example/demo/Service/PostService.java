@@ -1,5 +1,6 @@
 package com.example.demo.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +18,11 @@ import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.PostStatusEnum;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Favourite;
+import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
@@ -36,19 +39,39 @@ public class PostService {
     private UserService userService;
     @Autowired
     private FavouriteService favouriteService;
+    @Autowired
+    private FriendService friendService;
+    @Autowired
+    private ModelMapper mapper;
 
     @Transactional
     public PostDto createPost(CreatePostRequest request) throws Exception {
         Post post = new Post();
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         post.setContent(request.getContent());
+        post.setImages(imageService.saveImages(request.getImages(), post));
         post.setUser(user);
-        post.setStatus(StatusEnum.active);
+        try{
+            post.setStatus(request.getStatus() != null ? PostStatusEnum.valueOf(request.getStatus()) : PostStatusEnum.PUBLIC);
+        }catch(IllegalArgumentException e){
+            throw new Exception("status only accept 'PRIVATE', 'PUBLIC' or 'FRIEND_ONLY'");
+        }
         Post result = postRepository.save(post);
         return modelMapper.map(result, PostDto.class);
     }
 
-    public Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
+        public CustomPage<PostDto> getFriendPost(Pageable pageable) throws Exception {
+        List<Long> friendIds = new ArrayList<>();
+        friendService.getAllFriend().forEach(user -> friendIds.add(user.getId()));
+        try {
+            return mapper.map(findByUserIdsOrderByCreatedAt(friendIds, pageable),
+                    new TypeToken<CustomPage<PostDto>>() {}.getType());
+        } catch (InvalidDataAccessApiUsageException e) {
+            throw new Exception("wrong sort by");
+        }
+    }
+
+    private Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
         Page<Post> posts = postRepository.findByUserIdsOrderByCreatedAt(ids, pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
@@ -84,8 +107,14 @@ public class PostService {
             throw new CustomException(403, "you don't have permission to edit this post");
         }
         post.setContent(data.getContent());
-        post.setStatus(data.getStatus());
-        post.setImages(imageService.editImage(data.getImages(), post, data.getRemoveImages()));
+        try{
+            post.setStatus(PostStatusEnum.valueOf(data.getStatus()));
+        }catch(IllegalArgumentException e){
+            throw new Exception("status only accept 'PRIVATE', 'PUBLIC' or 'FRIEND_ONLY'");
+        }
+        List<Image> images = imageService.editImage(data.getImages(), post);
+        post.getImages().clear();
+        post.getImages().addAll(images);
         if (post.getContent() == null && post.getImages().isEmpty()) {
             throw new Exception("cannot delete all content and image");
         }

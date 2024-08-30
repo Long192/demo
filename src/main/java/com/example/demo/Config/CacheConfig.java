@@ -15,7 +15,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 public class CacheConfig {
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("otpCache");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("otpCache", "forgotPasswordCache");
         cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).maximumSize(10));
         return cacheManager;
     }

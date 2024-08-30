@@ -33,7 +33,6 @@ import com.example.demo.Model.ForgotPassword;
 import com.example.demo.Model.Otp;
 import com.example.demo.Model.RefreshToken;
 import com.example.demo.Model.User;
-import com.example.demo.Repository.ForgotPasswordRepository;
 import com.example.demo.Repository.UserRepository;
 import com.example.demo.Utils.AppUtils;
 import com.example.demo.Utils.JwtUtil;
@@ -49,8 +48,6 @@ public class AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private ForgotPasswordRepository forgotPasswordRepository;
-    @Autowired
     private RefreshService refreshService;
     @Autowired
     private CacheManager cacheManager;
@@ -60,16 +57,17 @@ public class AuthService {
     private Environment environment;
 
     public UserDto signUp(SignUpRequest request) throws Exception {
-        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setLenient(false);
         User user = new User();
+
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEtc(request.getEtc());
         user.setRole(RoleEnum.user);
         user.setFullname(request.getFullname());
         user.setAvatar(request.getAvatar());
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        dateFormat.setLenient(false);
+        
         try {
             if (request.getDob() != null && !request.getDob().isBlank()) {
                 java.util.Date date = dateFormat.parse(request.getDob());
@@ -81,6 +79,7 @@ public class AuthService {
         } catch (ParseException  e) {
             throw new CustomException(400, "Dob invalid");
         }
+
         user.setStatus(StatusEnum.active);
         user.setAddress(request.getAddress());
         User result = userRepository.save(user);
@@ -115,6 +114,7 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         RefreshToken refreshToken = refreshService.findByUserId(user.getId());
         String jwt = jwtUtil.generateToken(user);
+
         response.setToken(jwt);
         response.setRefreshToken(
                 refreshToken != null ? refreshToken.getToken() : refreshService.createRefreshToken(user)
@@ -125,6 +125,7 @@ public class AuthService {
         response.setEmail(user.getEmail());
         response.setFullname(user.getFullname());
         cache.evict(user.getId());
+
         return response;
     }
 
@@ -135,6 +136,7 @@ public class AuthService {
         } catch (RuntimeException e) {
             throw new Exception("wrong email or password");
         }
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         OtpDto otpDto = new OtpDto();
@@ -145,40 +147,65 @@ public class AuthService {
                 .tryNumber(5)
                 .build();
         Cache cache = cacheManager.getCache("otpCache");
+
         if(cache == null){
             throw new CustomException(500, "server Error");
         }
+
         cache.put(user.getId(), cacheOtp);
         otpDto.setOtp(cacheOtp.getOtp());
         otpDto.setUserId(cacheOtp.getUserId());
+
         return otpDto;
     }
 
     public ForgotPasswordResponse forgotPassword(String email) throws Exception {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
-        ForgotPasswordResponse urlResponse = new ForgotPasswordResponse();
         String token = UUID.randomUUID().toString();
         String url =
                 environment.getProperty("base-url") + "/auth/reset-password?userId=" + user.getId() + "&token=" + token;
         ForgotPassword forgotPassword = new ForgotPassword();
-        forgotPassword.setUser(user);
+
+        Cache cache = cacheManager.getCache("forgotPasswordCache");
+        if(cache == null){
+            throw new CustomException(500, "server error");
+        }
+
+        forgotPassword.setUserId(user.getId());
         forgotPassword.setToken(token);
         forgotPassword.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-        forgotPasswordRepository.save(forgotPassword);
-        urlResponse.setUrl(url);
-        return urlResponse;
+        cache.put(user.getId(), forgotPassword);
+
+        return ForgotPasswordResponse.builder().url(url).build();
     }
 
     public void resetPassword(String password, String id, String token) throws Exception {
         User user =
                 userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new CustomException(404, "user not found"));
-        ForgotPassword forgotPassword = forgotPasswordRepository.findByUserIdAndToken(Long.valueOf(id), token);
-        if (forgotPassword == null)
+        
+        Cache cache = cacheManager.getCache("forgotPasswordCache");
+        if(cache == null){
+            throw new CustomException(500, "server error");
+        }
+
+        ForgotPassword forgotPassword = cache.get(user.getId(), ForgotPassword.class);
+
+        if (forgotPassword == null){
             throw new CustomException(404, "reset password request not found");
-        if (validateResetPasswordToken(forgotPassword, token))
+        }
+
+        if(!forgotPassword.getToken().equals(token)){
+            cache.evict(user.getId());
+            throw new CustomException(404, "token invalid");
+        }
+
+        if (validateResetPasswordToken(forgotPassword, token)){
             throw new CustomException(404, "reset password request expired");
+        }
+
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
+        cache.evict(user.getId());
     }
 
     public LoginResponse refreshToken(String refreshToken) throws Exception {
@@ -187,6 +214,7 @@ public class AuthService {
         User user = refresh.getUser();
         String token = jwtUtil.generateToken(user);
         response.setToken(token);
+        
         return response;
     }
 

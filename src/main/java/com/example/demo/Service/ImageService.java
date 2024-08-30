@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
@@ -16,36 +15,41 @@ import com.example.demo.Repository.ImageRepository;
 public class ImageService {
     @Autowired
     private ImageRepository imageRepository;
-    @Autowired
-    private UploadService uploadService;
 
     @Transactional
-    public List<Image>  upload(List<MultipartFile> multiPartFiles, Post post)
-        throws Exception {
+    public List<Image> saveImages(List<String> urls, Post post){
+        if(urls == null || urls.isEmpty()){
+            return null;
+        }
+        
         List<Image> images = new ArrayList<>();
-        for (MultipartFile file : multiPartFiles) {
+        for (String url : urls) {
             Image image = new Image();
             image.setPost(post);
-            image.setUrl(uploadService.uploadAndGetUrl(file));
+            image.setUrl(url);
             images.add(image);
         }
-
-        imageRepository.saveAll(images);
-
-        return images;
+        return imageRepository.saveAll(images);
     }
 
     @Transactional
-    public List<Image> editImage(List<MultipartFile> files, Post post, List<String> removeUrls) throws Exception {
-        List<Image> images = post.getImages();
-        if (files != null && !files.isEmpty() && !files.getFirst().isEmpty()) {
-            images.addAll(upload(files, post));
-        }
-        if (removeUrls != null && (!removeUrls.isEmpty())) {
-            List<Image> removeImages = imageRepository.findAllByUrls(removeUrls);
-            images.removeAll(removeImages);
-            imageRepository.deleteAll(images);
-        }
+    public List<Image> editImage(List<String> urls, Post post){
+        List<Image> images = new ArrayList<>();
+
+        urls.forEach(url -> {
+            if(post.getImages().stream().noneMatch(image -> image.getUrl().equals(url))){
+                Image image = new Image();
+                image.setPost(post);
+                image.setUrl(url);
+                images.add(image);
+                return;
+            }
+
+            Image image = post.getImages().stream().filter(i -> i.getUrl().equals(url)).findFirst().get();
+            image.setPost(post);
+            images.add(image);
+        });
+
         return images;
     }
 }
