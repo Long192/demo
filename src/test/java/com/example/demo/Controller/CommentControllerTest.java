@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.example.demo.Dto.Response.CommentDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,14 +40,15 @@ public class CommentControllerTest {
     public void addCommentSuccess() throws Exception {
         AddCommentRequest req = AddCommentRequest.builder().content("comment 1").postId(1L).build();
 
+        when(commentService.addComment(req)).thenReturn(CommentDto.builder().id(1L).content(req.getContent()).build());
+
         mockMvc.perform(post("/comment").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data.content").value(req.getContent()));
     }
 
     @Test
@@ -94,13 +96,11 @@ public class CommentControllerTest {
     @Test
     @WithMockUser
     public void deleteCommentSuccess() throws Exception {
+
         mockMvc.perform(delete("/comment/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.status").value(true))
-                .andExpect(jsonPath("data.message").value("success"));
+                .andExpect(jsonPath("status").value(200));
     }
 
     @Test
@@ -133,6 +133,9 @@ public class CommentControllerTest {
 
         UpdateCommentRequest req = UpdateCommentRequest.builder().content("test").build();
 
+        when(commentService.editComment(1L, req))
+                .thenReturn(CommentDto.builder().id(1L).content(req.getContent()).build());
+
         mockMvc.perform(put("/comment/1").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -140,8 +143,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data.content").value(req.getContent()));
     }
 
     @Test

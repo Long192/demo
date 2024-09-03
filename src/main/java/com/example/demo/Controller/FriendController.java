@@ -99,7 +99,7 @@ public class FriendController {
     @DeleteMapping("/reject-friend/{id}")
     public ResponseEntity<CustomResponse<UserDto>> rejectFriendRequest(@PathVariable Long id)
         throws Exception {
-        friendService.rejectFriendRequest(id);
+        friendService.deleteFriendRequest(id);
         return ResponseEntity.ok(new CustomResponse<>());
     }
 
@@ -113,7 +113,7 @@ public class FriendController {
     @Operation(summary = "cancel friend request", description = "cancel a friend request")
     @DeleteMapping("/cancel-friend/{id}")
     public ResponseEntity<CustomResponse<?>> cancelFriendRequest(@PathVariable Long id) throws Exception {
-        friendService.cancelFriendRequest(id);
+        friendService.deleteFriendRequest(id);
         return ResponseEntity.ok(new CustomResponse<>());
     }
 }

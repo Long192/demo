@@ -1,13 +1,10 @@
 package com.example.demo.Dto.Request;
 
+import jakarta.validation.constraints.*;
 import org.hibernate.validator.constraints.URL;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,8 +20,8 @@ public class SignUpRequest {
     @Size(max = 50, message = "email max {max} characters")
     @NotBlank(message = "email required")
     private String email;
-    @NotBlank(message = "password required")
     @Size(min = 6, max = 50, message = "password between {min} and {max} character")
+    @NotNull(message = "password required")
     private String password;
     @Size(max = 50, message = "fullname max {max} character")
     private String fullname;

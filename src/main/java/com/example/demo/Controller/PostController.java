@@ -73,8 +73,7 @@ public class PostController {
     @Operation(summary = "get post by id", description = "get a post by id of the post")
     @GetMapping("/{id}")
     public ResponseEntity<CustomResponse<PostDto>> getPostById(@PathVariable String id) throws Exception {
-        Post post = postService.findById(Long.valueOf(id));
-        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(modelMapper.map(post, PostDto.class)).build());
+        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(postService.findOneById(Long.valueOf(id))).build());
     }
 
     @Operation(summary = "add new post", description = "add a new post")
@@ -116,8 +115,7 @@ public class PostController {
     @GetMapping("/friend-posts")
     public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getFriendPost(
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "id") String sortBy
+        @RequestParam(defaultValue = "10") int size
     ) throws Exception {
         PageRequest pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(

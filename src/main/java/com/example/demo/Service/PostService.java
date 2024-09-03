@@ -2,8 +2,10 @@ package com.example.demo.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import com.example.demo.Model.*;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +23,6 @@ import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.PostStatusEnum;
 import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.Favourite;
-import com.example.demo.Model.Image;
-import com.example.demo.Model.Post;
-import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
 
 @Service
@@ -60,15 +58,12 @@ public class PostService {
         return modelMapper.map(result, PostDto.class);
     }
 
-        public CustomPage<PostDto> getFriendPost(Pageable pageable) throws Exception {
+        public CustomPage<PostDto> getFriendPost(Pageable pageable) {
         List<Long> friendIds = new ArrayList<>();
         friendService.getAllFriend().forEach(user -> friendIds.add(user.getId()));
-        try {
-            return mapper.map(findByUserIdsOrderByCreatedAt(friendIds, pageable),
-                    new TypeToken<CustomPage<PostDto>>() {}.getType());
-        } catch (InvalidDataAccessApiUsageException e) {
-            throw new Exception("wrong sort by");
-        }
+        return mapper.map(findByUserIdsOrderByCreatedAt(friendIds, pageable),
+                new TypeToken<CustomPage<PostDto>>() {}.getType());
+
     }
 
     private Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
@@ -78,7 +73,7 @@ public class PostService {
 
     public CustomPage<PostDto> findAndPaginate(Pageable pageable, String textSearch) throws Exception {
         try{
-            Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, StatusEnum.active, pageable);
+            Page<Post> postPage = postRepository.findPostWithSearchAndSort(textSearch, PostStatusEnum.PUBLIC, pageable);
             return  modelMapper.map(postPage, new TypeToken<CustomPage<PostDto>>() {}.getType());
         }catch (InvalidDataAccessApiUsageException e){
             throw new Exception("wrong sort by");
@@ -97,6 +92,33 @@ public class PostService {
 
     public Post findById(Long id) throws Exception {
         return postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
+    }
+
+    public PostDto findOneById(Long id) throws Exception {
+        User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        PostDto post = mapper.map(findById(id), PostDto.class);
+        if(post.getStatus() == PostStatusEnum.PUBLIC) {
+            return post;
+        }
+
+        if(post.getStatus() == PostStatusEnum.FRIEND_ONLY) {
+            Friend friend = friendService.findFriend(post.getUser().getId());
+            if(friend != null){
+              return post;
+            }
+
+            throw new CustomException(403, "you dont have permission to see this post");
+        }
+
+        if(post.getStatus() == PostStatusEnum.PRIVATE) {
+            if(Objects.equals(post.getUser().getId(), me.getId())){
+                return post;
+            }
+
+            throw new CustomException(403, "you dont have permission to see this post");
+        }
+
+        return null;
     }
 
     @Transactional

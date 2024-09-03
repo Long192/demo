@@ -8,17 +8,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.demo.Dto.Response.CustomPage;
+import com.example.demo.Enum.PostStatusEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -51,15 +52,19 @@ public class PostServiceTest {
     private ImageRepository imageRepository;
     @Mock
     private UserService userService;
-    @Mock
+    @Spy
     private ModelMapper modelMapper;
+    @Spy
+    private ModelMapper mapper;
     @Mock
     private FavouriteService favouriteService;
+    @Mock
+    private FriendService friendService;
 
     User user = User.builder().id(1L).email("email@email.com").build();
     User user2 = User.builder().id(2L).email("email@email.com").likePosts(List.of()).build();
 
-    Post post1 = Post.builder().content("content1").user(user).likedByUsers(List.of()).build();
+    Post post1 = Post.builder().content("content1").user(user).likedByUsers(List.of()).images(List.of()).build();
     Post post2 = Post.builder().content("content2").user(user).build();
     Post post3 = Post.builder().content("content3").user(user).build();
     Post post4 = Post.builder().content("content4").user(user2).build();
@@ -75,25 +80,34 @@ public class PostServiceTest {
     @Test
     @Transactional
     public void createPostSuccess() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test".getBytes());
-        CreatePostRequest req = CreatePostRequest.builder().images(List.of(file)).content("content").build();
+        CreatePostRequest req = CreatePostRequest.builder().images(List.of("url")).content("content").build();
         User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
+        Image img = Image.builder().id(1L).url("url").build();
         Post post = Post.builder()
                 .user(user)
                 .content("content")
+                .images(List.of(img))
                 .build();
+        img.setPost(post);
 
-        postService.createPost(req);
-        
-        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
+        when(postRepository.save(any(Post.class))).thenReturn(post);
 
-        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
-        Post postCaptor = postCaptured.getValue();
+        PostDto res = postService.createPost(req);
 
-        verify(imageService, atLeastOnce()).upload(List.of(file), postCaptor);
+        assertNotNull(res);
+        assertEquals(res.getContent(), post.getContent());
+    }
 
-        assertNotNull(postCaptor);
-        assertEquals(postCaptor.getContent(), post.getContent());
+    @Test
+    public void createdPostFailedStatusInvalid() {
+        CreatePostRequest req =
+                CreatePostRequest.builder().images(List.of("url")).status("fake").content("content").build();
+        User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
+
+        Exception exception = assertThrows(Exception.class, () -> postService.createPost(req));
+
+        assertNotNull(exception);
+        assertEquals(exception.getMessage(), "status only accept 'PRIVATE', 'PUBLIC' or 'FRIEND_ONLY'");
     }
 
     @Test
@@ -106,15 +120,12 @@ public class PostServiceTest {
                 .content("content")
                 .build();
 
-        postService.createPost(req);
-        
-        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
+        when(postRepository.save(any(Post.class))).thenReturn(post);
 
-        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
-        Post postCaptor = postCaptured.getValue();
+        PostDto res = postService.createPost(req);
 
-        assertNotNull(postCaptor);
-        assertEquals(postCaptor.getContent(), post.getContent());
+        assertNotNull(res);
+        assertEquals(res.getContent(), post.getContent());
     }
 
     @Test
@@ -127,17 +138,12 @@ public class PostServiceTest {
                 .content("content")
                 .build();
 
-        postService.createPost(req);
+        when(postRepository.save(any(Post.class))).thenReturn(post);
 
-        ArgumentCaptor<Post> postCaptured = ArgumentCaptor.forClass(Post.class);
+        PostDto res = postService.createPost(req);
 
-        verify(postRepository, atLeastOnce()).save(postCaptured.capture());
-        verify(imageService, never()).upload(any(), any(Post.class));
-        Post postCaptor = postCaptured.getValue();
-
-
-        assertNotNull(postCaptor);
-        assertEquals(postCaptor.getContent(), post.getContent());
+        assertNotNull(res);
+        assertEquals(res.getContent(), post.getContent());
     }
 
     @Test
@@ -152,20 +158,6 @@ public class PostServiceTest {
         assertEquals(exception.getMessage(), "entity already exists");
     }
 
-    @Test
-    public void findPostByUserIdsAndCreatedAtSuccess() throws Exception {
-        Page<Post> posts = new PageImpl<>(List.of(post1, post2, post3));
-        Page<PostDto>postDtos = posts.map(source -> modelMapper.map(source, PostDto.class));
-        List<Long> ids = List.of(1L, 2L, 3L);
-        PageRequest page = PageRequest.of(0, 10);
-
-        when(postRepository.findByUserIdsOrderByCreatedAt(ids, page)).thenReturn(posts);
-
-        Page<PostDto> res = postService.findByUserIdsOrderByCreatedAt(ids, page);
-
-        assertNotNull(res);
-        assertEquals(res, postDtos);
-    }
 
     @Test
     public void findAndPaginateSuccess() throws Exception {
@@ -173,18 +165,18 @@ public class PostServiceTest {
         Page<PostDto>postDtos = posts.map(source -> modelMapper.map(source, PostDto.class));
         PageRequest page = PageRequest.of(0, 10);
 
-        when(postRepository.findPostWithSearchAndSort("search", StatusEnum.active, page)).thenReturn(posts);
+        when(postRepository.findPostWithSearchAndSort("search", PostStatusEnum.PUBLIC, page)).thenReturn(posts);
 
-        Page<PostDto> res = postService.findAndPaginate(page, "search");
+        CustomPage<PostDto> res = postService.findAndPaginate(page, "search");
 
         assertNotNull(res);
-        assertEquals(postDtos, res);
+        assertEquals(postDtos.getContent().getFirst().getId(), res.getContent().getFirst().getId());
     }
 
     @Test
     public void findAndPaginateFailed() throws Exception {
         PageRequest page = PageRequest.of(0, 10);
-        when(postRepository.findPostWithSearchAndSort("search", StatusEnum.active, page))
+        when(postRepository.findPostWithSearchAndSort("search", PostStatusEnum.PUBLIC, page))
                 .thenThrow(new InvalidDataAccessApiUsageException(null));
 
         Exception exception =
@@ -201,10 +193,10 @@ public class PostServiceTest {
 
         when(postRepository.getPostByUserIdAndSearch(1L, page, "search")).thenReturn(posts);
 
-        Page<PostDto> res = postService.findMyPostsAndPaginate(page, "search");
+        CustomPage<PostDto> res = postService.findMyPostsAndPaginate(page, "search");
 
         assertNotNull(res);
-        assertEquals(postDtos, res);
+        assertEquals(postDtos.getContent().getFirst().getId(), res.getContent().getFirst().getId());
     }
 
     @Test
@@ -242,16 +234,19 @@ public class PostServiceTest {
     @Test
     @Transactional
     public void editPostSuccess() throws Exception {
-        MockMultipartFile file =
-                new MockMultipartFile("images", "images.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
+        Post testPost = Post.builder().id(1L).user(user).content("content").build();
         UpdatePostRequest req = UpdatePostRequest.builder()
                 .content("content")
-                .images(List.of(file))
+                .images(List.of("url"))
+                .status("PUBLIC")
                 .build();
-        Image img = Image.builder().id(1L).url("url").build();
+        Image img = Image.builder().id(1L).url("url").post(post1).build();
+        testPost.setImages(new ArrayList<>());
+        testPost.getImages().add(img);
 
-        when(imageService.editImage(List.of(file), post1, null)).thenReturn(List.of(img));
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
+        when(imageService.editImage(List.of("url"), post1)).thenReturn(List.of(img));
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+        when(postRepository.save(any(Post.class))).thenReturn(testPost);
 
         postService.editPost(1L, req);
 
@@ -262,7 +257,23 @@ public class PostServiceTest {
         Post postCaptor = postCaptured.getValue();
 
         assertNotNull(postCaptor);
-        assertEquals(post1, postCaptor);
+        assertEquals(testPost, postCaptor);
+    }
+
+    @Test
+    @Transactional
+    public void editPostFailedWrongInvalid() throws Exception {
+        Post testPost = Post.builder().id(1L).user(user).content("content").build();
+        UpdatePostRequest req = UpdatePostRequest.builder()
+                .content("content")
+                .images(List.of("url"))
+                .status("status")
+                .build();
+
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
+        Exception exception = assertThrows(Exception.class, () -> postService.editPost(1L, req));
+        assertEquals(exception.getMessage(), "status only accept 'PRIVATE', 'PUBLIC' or 'FRIEND_ONLY'");
     }
 
     @Test
@@ -297,9 +308,13 @@ public class PostServiceTest {
     @Test
     @Transactional
     public void editPostFailedDeleteAllContentAndImage() throws Exception {
-        UpdatePostRequest req = UpdatePostRequest.builder().content(null).build();
+        Post testPost = Post.builder().id(1L).user(user).content("content").build();
+        Image img = Image.builder().id(1L).url("url").post(post1).build();
+        testPost.setImages(new ArrayList<>());
+        testPost.getImages().add(img);
+        UpdatePostRequest req = UpdatePostRequest.builder().content(null).status("PUBLIC").images(List.of()).build();
 
-        when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
 
         Exception exception = assertThrows(Exception.class, () -> postService.editPost(1L, req));
 
@@ -314,21 +329,16 @@ public class PostServiceTest {
         when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
         when(userService.findById(1L)).thenReturn(user);
         when(favouriteService.findById(anyLong())).thenReturn(Optional.empty());
+        when(favouriteService.save(any(Favourite.class))).thenReturn(favourite);
 
-        ArgumentCaptor<Favourite> favouriteCaptured = ArgumentCaptor.forClass(Favourite.class);
+        PostDto res = postService.like(1L);
 
-        postService.like(1L);
-
-        verify(favouriteService, atLeastOnce()).save(favouriteCaptured.capture());
-
-        Favourite favouriteCaptor = favouriteCaptured.getValue();
-
-        assertNotNull(favouriteCaptor);
-        assertEquals(favourite, favouriteCaptor);
+        assertNotNull(res);
+        assertEquals(favourite.getPost().getId(), res.getId());
     }
 
     @Test
-    public void dissLikeSuccess() throws Exception {
+    public void disLikeSuccess() throws Exception {
         Favourite favourite = Favourite.builder().id(1L).user(user).post(post1).build();
 
         when(postRepository.findById(1L)).thenReturn(Optional.of(post1));
@@ -417,4 +427,17 @@ public class PostServiceTest {
         assertEquals(exception.getMessage(), "you don't have permission to delete this post");
     }
 
+    @Test
+    public void getFriendPostSuccess() throws Exception {
+        Page<Post> posts = new PageImpl<>(List.of(post1, post2, post3));
+
+        when(friendService.getAllFriend()).thenReturn(List.of(user, user2));
+        when(postRepository.findByUserIdsOrderByCreatedAt(any(), any(Pageable.class))).thenReturn(posts);
+
+        CustomPage<PostDto> res = postService.getFriendPost(PageRequest.of(0, 10));
+
+        assertNotNull(res);
+        assertEquals(res.getContent().size(), 3);
+        assertEquals(res.getTotalElements(), 3);
+    }
 }

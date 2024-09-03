@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public class LoginRequest {
     @Email(message = "wrong email format")
     @Size(max = 50, message = "email max {max} characters")
     private String email;
-    @NotBlank(message = "password required")
+    @NotNull(message = "password required")
     @Size(min = 6, max = 50, message = "password between {min} and {max} character")
     private String password;
 }

@@ -28,8 +28,6 @@ import com.uploadcare.api.Client;
 
 @SpringBootTest
 public class ImageServiceTest {
-    MockMultipartFile file =
-            new MockMultipartFile("avatar", "avatar.jpeg", "image/jpeg", "image/jpeg".getBytes());
     Post post = Post.builder()
             .id(1L)
             .content("content")
@@ -38,15 +36,9 @@ public class ImageServiceTest {
 
     @InjectMocks
     private ImageService imageService;
-
     @Mock
     private ImageRepository imageRepository;
 
-    @Mock
-    private UploadService uploadService;
-
-    @Mock
-    private Client client;
 
     @BeforeEach
     public void setUp(){
@@ -59,49 +51,43 @@ public class ImageServiceTest {
     @Test
     @Transactional
     public void uploadSuccess() throws Exception {
-        when(uploadService.uploadAndGetUrl(any(MultipartFile.class))).thenReturn("url");
+        Image image = Image.builder()
+                .id(1L)
+                .post(post)
+                .url("url")
+                .build();
+        List<Image> images = List.of(image);
 
-        List<Image> images = imageService.upload(List.of(file), post);
+        when(imageRepository.saveAll(any())).thenReturn(images);
 
-        ArgumentCaptor<List<Image>> imageCaptor = ArgumentCaptor.forClass(List.class);
+        List<Image> res = imageService.saveImages(List.of("url"), post);
 
-        verify(imageRepository, times(1)).saveAll(imageCaptor.capture());
-
-        List<Image> imagesCaptured = imageCaptor.getValue();
-
-        assertNotNull(images);
-        assertEquals(images, imagesCaptured);
+        assertNotNull(res);
+        assertEquals(res, images);
     }
+
+    @Test
+    public void saveImageNullUrls() {
+        List<Image> images = imageService.saveImages(null, post);
+
+        assertNull(images);
+    }
+
+    @Test
+    public void saveImageEmptyUrls() {
+        List<Image> images = imageService.saveImages(List.of(), post);
+
+        assertNull(images);
+    }
+
+
 
     @Test
     public void editImageSuccessAddNew() throws Exception {
-        when(uploadService.uploadAndGetUrl(any(MultipartFile.class))).thenReturn("url");
-
-        List<Image> images = imageService.editImage(List.of(file), post, null);
-
-        ArgumentCaptor<List<Image>> imageCaptor = ArgumentCaptor.forClass(List.class);
-
-        verify(imageRepository, times(1)).saveAll(imageCaptor.capture());
-
-        List<Image> imagesCaptured = imageCaptor.getValue();
+        List<Image> images = imageService.editImage(List.of("url1"), post);
 
         assertNotNull(images);
-        assertEquals(images, imagesCaptured);
-    }
-    @Test
-    public void editImageSuccessRemove() throws Exception {
-        when(uploadService.uploadAndGetUrl(any(MultipartFile.class))).thenReturn("url");
-
-        List<Image> images = imageService.editImage(null, post, List.of("url"));
-
-        ArgumentCaptor<List<Image>> imageCaptor = ArgumentCaptor.forClass(List.class);
-
-        verify(imageRepository, times(1)).deleteAll(imageCaptor.capture());
-
-        List<Image> imagesCaptured = imageCaptor.getValue();
-
-        assertNotNull(images);
-        assertEquals(images, imagesCaptured);
+        assertEquals(images.getFirst().getUrl(), "url1");
     }
 
 

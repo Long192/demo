@@ -96,8 +96,12 @@ public class AuthService {
 
         otp = cache.get(request.getUserId(), Otp.class);
 
-        if (otp == null || !validateOtp(otp)) {
+        if (otp == null) {
             throw new BadCredentialsException("login request not found");
+        }
+
+        if(!validateOtp(otp)){
+            throw new BadCredentialsException("otp expired");
         }
 
         if(!otp.getOtp().equals(request.getOtp()) ){
@@ -211,6 +215,9 @@ public class AuthService {
     public LoginResponse refreshToken(String refreshToken) throws Exception {
         LoginResponse response = new LoginResponse();
         RefreshToken refresh = refreshService.findByToken(refreshToken);
+        if(refresh.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))){
+            throw new CustomException(400, "refresh token expired");
+        }
         User user = refresh.getUser();
         String token = jwtUtil.generateToken(user);
         response.setToken(token);

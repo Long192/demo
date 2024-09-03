@@ -7,11 +7,14 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.demo.Dto.Response.UserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -45,6 +48,8 @@ public class UserServiceTest {
     private ImageService imageService;
     @Mock
     private UploadService uploadService;
+    @Spy
+    private ModelMapper mapper;
 
     @BeforeEach
     public void setUp() {
@@ -124,46 +129,44 @@ public class UserServiceTest {
 
     @Test
     public void updateUserSuccess() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("avatar", "avatar.jpeg", MediaType.IMAGE_JPEG_VALUE,
-                "avatar".getBytes());
         UpdateUserRequest req = UpdateUserRequest.builder()
                 .etc("etc")
                 .fullname("new full name")
-                .password("new password")
                 .address("address")
-                .dob("2002/09/01")
-                .avatar(file)
+                .dob("2002-09-01")
+                .avatar("https://localhost:8080/")
                 .build();
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        userService.updateUser(req);
+        UserDto res = userService.updateUser(req);
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository, times(1)).save(userCaptor.capture());
-
-        User userCaptured = userCaptor.getValue();
-
-        assertNotNull(userCaptured);
-        assertEquals(userCaptured, user);
+        assertNotNull(res);
+        assertEquals(res.getId(), user.getId());
+        assertEquals(res.getFullname(), user.getFullname());
+        assertEquals(res.getAddress(), user.getAddress());
+        assertEquals(res.getDob(), user.getDob().toString());
+        assertEquals(res.getAvatar(), user.getAvatar());
     }
 
     @Test
-    public void updateUserSuccessAllParamNull () throws Exception {
+        public void updateUserSuccessAllParamNull () throws Exception {
         UpdateUserRequest req = UpdateUserRequest.builder()
                 .build();
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        userService.updateUser(req);
+        UserDto res = userService.updateUser(req);
 
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository, times(1)).save(userCaptor.capture());
-
-        User userCaptured = userCaptor.getValue();
-
-        assertNotNull(userCaptured);
-        assertEquals(userCaptured, user);
+        assertNotNull(res);
+        assertEquals(res.getEmail(), user.getEmail());
+        assertEquals(res.getFullname(), user.getFullname());
+        assertEquals(res.getAddress(), user.getAddress());
+        assertEquals(res.getDob(), user.getDob());
+        assertEquals(res.getAvatar(), user.getAvatar());
+        assertEquals(res.getId(), user.getId());
     }
 
     @Test
@@ -171,14 +174,14 @@ public class UserServiceTest {
         UpdateUserRequest req = UpdateUserRequest.builder()
                 .etc("")
                 .fullname("")
-                .password("")
                 .address("")
                 .dob("")
                 .build();
 
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        userService.updateUser(req);
+        UserDto res = userService.updateUser(req);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository, times(1)).save(userCaptor.capture());

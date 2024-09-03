@@ -14,8 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateUserRequest {
-    @Size(min = 6, max = 50, message = "password must beetwen {min} and {max} character")
-    private String password;
     @Size(max = 50, message = "fullname max {max} character")
     private String fullname;
     @URL(message = "url invalid")

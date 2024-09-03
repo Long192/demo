@@ -2,6 +2,7 @@ package com.example.demo.Repository;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Enum.PostStatusEnum;
 import com.example.demo.Model.Post;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -19,7 +20,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE LOWER(p.content) LIKE LOWER(CONCAT('%', :textSearch, '%')) AND p.status = :status")
     Page<Post> findPostWithSearchAndSort(
         @Param("textSearch") String textSearch,
-        @Param("status") StatusEnum status,
+        @Param("status") PostStatusEnum status,
         Pageable page
     );
 
@@ -28,4 +29,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT p FROM Post p WHERE (p.user.id IN :ids AND p.status != 'PRIVATE') OR (p.status = 'PUBLIC' AND NOT(p.user.id IN :ids AND p.status != 'PRIVATE')) ORDER BY p.createdAt")
     Page<Post> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.id = :id and p.status NOT IN (:status)")
+    Optional<Post> findByIdAndStatusNot(Long id, List<PostStatusEnum> status);
 }

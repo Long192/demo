@@ -2,12 +2,9 @@ package com.example.demo.Model;
 
 import java.sql.Timestamp;
 import java.util.List;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import com.example.demo.Enum.PostStatusEnum;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

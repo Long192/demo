@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -34,6 +35,8 @@ public class CommentServiceTest {
     private PostService postService;
     @Mock
     private UserService userService;
+    @Mock
+    private ModelMapper mapper;
     
     User user = User.builder().id(1L).email("email@email.com").build();
     AddCommentRequest addReq = AddCommentRequest.builder().content("content").postId(1L).build();

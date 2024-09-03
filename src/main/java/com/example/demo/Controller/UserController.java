@@ -3,7 +3,6 @@ package com.example.demo.Controller;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,21 +11,20 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.example.demo.Dto.Request.UpdateUserRequest;
 import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Service.ExcelService;
 import com.example.demo.Service.UserService;
-
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 @Tag(name = "user", description = "user")
 @RestController
@@ -68,7 +66,7 @@ public class UserController {
 
     @Operation(summary = "update user", description = "update user info")
     @PutMapping("")
-    public ResponseEntity<CustomResponse<UserDto>> updateUserInfo (@RequestBody UpdateUserRequest req) throws Exception {
+    public ResponseEntity<CustomResponse<UserDto>> updateUserInfo(@RequestBody @Valid UpdateUserRequest req) throws Exception {
         return ResponseEntity.ok(CustomResponse.<UserDto>builder().data(userService.updateUser(req)).build());
     }
 }

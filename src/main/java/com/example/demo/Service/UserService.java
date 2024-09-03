@@ -61,19 +61,15 @@ public class UserService implements UserDetailsService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         sdf.setLenient(false);
 
-        if (req.getPassword() != null && !req.getPassword().isBlank()) {
-            userInfo.setPassword(passwordEncoder.encode(req.getPassword()));
-        }
-
         if(req.getDob() != null && !req.getDob().isBlank()){
             try{
                 userInfo.setDob(new Date(sdf.parse(req.getDob()).getTime()));
             }catch(ParseException e){
-                throw new CustomException(400, "Dob");
+                throw new CustomException(400, "Dob invalid");
             }
         }
 
-        if(req.getAvatar() != null && !req.getAvatar().isBlank()){
+        if(req.getAvatar() != null){
             userInfo.setAvatar(req.getAvatar());
         }
 

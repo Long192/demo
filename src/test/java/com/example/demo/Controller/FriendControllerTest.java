@@ -6,12 +6,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Arrays;
+import java.util.List;
 
+import com.example.demo.Dto.Response.CustomPage;
+import com.example.demo.Dto.Response.UserDto;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -28,18 +34,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 public class FriendControllerTest {
 
+    User user1 = User.builder().id(1L).email("email1").fullname("fullname1").build();
+    User user2 = User.builder().id(2L).email("email2").fullname("fullname2").build();
+    User user3 = User.builder().id(3L).email("email3").fullname("fullname3").build();
+
     @Autowired
     private MockMvc mockMvc;
     @MockBean
     private FriendService friendService;
-
-    User user1 = User.builder().email("email1").fullname("fullname1").build();
-    User user2 = User.builder().email("email2").fullname("fullname2").build();
-    User user3 = User.builder().email("email3").fullname("fullname3").build();
-
-    PostDto post1 = PostDto.builder().content("content 1").build();
-    PostDto post2 = PostDto.builder().content("content 2").build();
-    PostDto post3 = PostDto.builder().content("content 3").build();
+    @Autowired
+    private ModelMapper mapper;
 
     private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
@@ -48,9 +52,10 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendSuccess() throws Exception {
+        Page<User> friends = new PageImpl<>(Arrays.asList(user1, user2, user3));
 
         when(friendService.getFriends(any(Pageable.class), anyString()))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
+                .thenReturn(mapper.map(friends, new TypeToken<CustomPage<UserDto>>() {}.getType()));
 
         mockMvc.perform(get("/friend")).andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
@@ -69,9 +74,6 @@ public class FriendControllerTest {
     @WithMockUser
     public void getFriendFailedNegativePageIndex() throws Exception {
 
-        when(friendService.getFriends(any(Pageable.class), anyString()))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
-
         mockMvc.perform(get("/friend").param("page", "-1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page index must not be less than zero"))
@@ -81,9 +83,6 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendFailedNegativePageSize() throws Exception {
-
-        when(friendService.getFriends(any(Pageable.class), anyString()))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
 
         mockMvc.perform(get("/friend").param("size", "-10"))
                 .andExpect(status().isBadRequest())
@@ -104,74 +103,21 @@ public class FriendControllerTest {
                 .andExpect(jsonPath("status").value(400));
     }
 
-    @Test
-    @WithMockUser
-    public void getFriendPostSuccess() throws Exception {
-
-        when(friendService.getFriendPost(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
-
-        mockMvc.perform(get("/friend/friend-posts")).andExpect(status().isOk())
-                .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.content[0].content").value("content 1"))
-                .andExpect(jsonPath("data.content[1].content").value("content 2"))
-                .andExpect(jsonPath("data.content[2].content").value("content 3"));
-    }
-
-    @Test
-    @WithMockUser
-    public void getFriendPostFailedWrongSortBy() throws Exception {
-
-        when(friendService.getFriendPost(any(Pageable.class))).thenThrow(new Exception("cannot find attribute"));
-
-        mockMvc.perform(get("/friend/friend-posts")).andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message").value("cannot find attribute"))
-                .andExpect(jsonPath("status").value(400));
-    }
-
-    @Test
-    @WithMockUser
-    public void getFriendPostsFailedNegativePageIndex() throws Exception {
-
-        when(friendService.getFriendPost(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
-
-        mockMvc.perform(get("/friend/friend-posts")
-                .param("page", "-1"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message").value("Page index must not be less than zero"))
-                .andExpect(jsonPath("status").value(400));
-    }
-
-    @Test
-    @WithMockUser
-    public void getFriendPostsFailedNegativePageSize() throws Exception {
-
-        when(friendService.getFriendPost(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(post1, post2, post3)));
-
-        mockMvc.perform(get("/friend/friend-posts")
-                .param("size", "-10"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message").value("Page size must not be less than one"))
-                .andExpect(jsonPath("status").value(400));
-    }
 
     @Test
     @WithMockUser
     public void sendAddFriendRequestSuccess() throws Exception {
 
         FriendRequest req = FriendRequest.builder().friendId(2L).build();
+        UserDto userDto = UserDto.builder().id(2L).fullname("fullname").email("email@email.com").build();
 
+        when(friendService.addFriend(2L)).thenReturn(userDto)
+;
         mockMvc.perform(post("/friend").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data").value(userDto));
     }
 
     @Test
@@ -207,11 +153,12 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendRequestSuccess() throws Exception {
-        
-        when(friendService.getFriendRequests(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
+        Page<User> friend = new PageImpl<>(Arrays.asList(user1, user2, user3));
 
-        mockMvc.perform(get("/friend/friend-request"))
+        when(friendService.getFriendRequests(any(Pageable.class)))
+                .thenReturn(mapper.map(friend, new TypeToken<CustomPage<UserDto>>() {}.getType()));
+
+        mockMvc.perform(get("/friend/friend-requests"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
@@ -231,7 +178,7 @@ public class FriendControllerTest {
         when(friendService.getFriendRequests(any(Pageable.class)))
                 .thenThrow(new Exception("cannot find attribute"));
 
-        mockMvc.perform(get("/friend/friend-request"))
+        mockMvc.perform(get("/friend/friend-requests"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("cannot find attribute"));
     }
@@ -239,11 +186,7 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendRequestFailedNegativePageIndex() throws Exception {
-
-        when(friendService.getFriendRequests(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
-
-        mockMvc.perform(get("/friend/friend-request")
+        mockMvc.perform(get("/friend/friend-requests")
                 .param("page", "-1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page index must not be less than zero"))
@@ -253,11 +196,7 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void getFriendRequestFailedNegativePageSize() throws Exception {
-
-        when(friendService.getFriendRequests(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Arrays.asList(user1, user2, user3)));
-
-        mockMvc.perform(get("/friend/friend-request")
+        mockMvc.perform(get("/friend/friend-requests")
                 .param("size", "-10"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("Page size must not be less than one"))
@@ -270,14 +209,16 @@ public class FriendControllerTest {
         
         FriendRequest req = FriendRequest.builder().friendId(2L).build();
 
+        UserDto userDto = mapper.map(user2, UserDto.class);
+
+        when(friendService.acceptFriendRequest(req.getFriendId())).thenReturn(userDto);
+
         mockMvc.perform(post("/friend/accept-friend").content(asJsonString(req)).accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.status").value(true))
-                .andExpect(jsonPath("data.message").value("success"));
+                .andExpect(jsonPath("data").value(userDto));
     }
 
     @Test
@@ -286,7 +227,7 @@ public class FriendControllerTest {
 
         FriendRequest req = FriendRequest.builder().friendId(2L).build();
 
-        doThrow(new Exception("user not found")).when(friendService).updateFriendStatus(anyLong());
+        doThrow(new Exception("user not found")).when(friendService).acceptFriendRequest(anyLong());
 
         mockMvc.perform(post("/friend/accept-friend").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
@@ -300,7 +241,7 @@ public class FriendControllerTest {
 
         FriendRequest req = FriendRequest.builder().friendId(2L).build();
 
-        doThrow(new Exception("already friend")).when(friendService).updateFriendStatus(anyLong());
+        doThrow(new Exception("already friend")).when(friendService).acceptFriendRequest(anyLong());
 
         mockMvc.perform(post("/friend/accept-friend").content(asJsonString(req))
                 .accept(MediaType.APPLICATION_JSON)
@@ -313,12 +254,47 @@ public class FriendControllerTest {
     @Test
     @WithMockUser
     public void deleteFriendSuccess() throws Exception {
+
         mockMvc.perform(delete("/friend/1"))
                 .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"));
+    }
+
+    @Test
+    @WithMockUser
+    public void getFriendReceiverSuccess() throws Exception {
+        UserDto userDto = mapper.map(user2, UserDto.class);
+        CustomPage<UserDto> page = new CustomPage<>();
+        page.setPageNumber(1);
+        page.setTotalPages(1);
+        page.setSize(1);
+        page.setContent(List.of(userDto));
+        page.setTotalElements(1);
+
+        when(friendService.getFriendReceivers(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/friend/friend-request-sent").contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.status").value(true))
-                .andExpect(jsonPath("data.message").value("success"));
+                .andExpect(jsonPath("data.content[0].email").value(userDto.getEmail()));
+    }
+
+    @Test
+    @WithMockUser
+    public void rejectFriendSuccess() throws Exception {
+        mockMvc.perform(delete("/friend/reject-friend/1").contentType(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(jsonPath("status").value(200))
+        .andExpect(jsonPath("message").value("success"));
+    }
+
+    @Test
+    @WithMockUser
+    public void cancelFriendSuccess() throws Exception {
+        mockMvc.perform(delete("/friend/cancel-friend/1").contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"));
     }
 
     

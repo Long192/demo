@@ -4,17 +4,17 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.example.demo.Dto.Response.UserDto;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
-
 import com.example.demo.Dto.Request.ForgotPasswordRequest;
 import com.example.demo.Dto.Request.GetTokenRequest;
 import com.example.demo.Dto.Request.LoginRequest;
@@ -27,7 +27,6 @@ import com.example.demo.Dto.Response.OtpDto;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +38,8 @@ public class AuthControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private AuthService authService;
+    @Mock
+    private ModelMapper mapper;
 
     private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
@@ -46,7 +47,13 @@ public class AuthControllerTest {
 
     @Test
     public void signUpTestOnlyUserAndPasswordSuccess() throws Exception {
-        SignUpRequest req = SignUpRequest.builder().email("javatest@javatest.com").password("testpassword").build();
+        SignUpRequest req = SignUpRequest.builder()
+                .email("javatest@javatest.com")
+                .password("testPassword")
+                .dob("2002-09-01")
+                .build();
+
+        when(authService.signUp(req)).thenReturn(UserDto.builder().id(1L).email("email@email.com").build());
 
         mockMvc.perform(post("/auth/signup").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
@@ -54,8 +61,7 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value("200"))
                 .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data.email").value("email@email.com"));
     }
 
     @Test
@@ -99,7 +105,7 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("status").value(400))
-                .andExpect((jsonPath("message").value("password need at least 6 character")));
+                .andExpect((jsonPath("message").value("password between 6 and 50 character")));
     }
 
     @Test
@@ -114,32 +120,6 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void SignupWithAvatar() throws Exception {
-        MockMultipartFile mockImg = new MockMultipartFile(
-                "avatar",
-                "img.jpeg",
-                MediaType.MULTIPART_FORM_DATA_VALUE,
-                "image".getBytes()
-        );
-
-        SignUpRequest req = SignUpRequest.builder()
-            .email("email@email.com")
-            .password("password")
-            .avatar(mockImg)
-            .build();
-
-        mockMvc.perform(multipart(HttpMethod.POST,"/auth/signup")
-            .file(mockImg)
-            .param("email", req.getEmail())
-            .param("password", req.getPassword())
-            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("message").value("success"))
-            .andExpect(jsonPath("status").value(200))
-            .andExpect(jsonPath("data").exists());
-    }
-
-    @Test
     public void SignupWithPasswordLessthanMinimum() throws Exception {
         SignUpRequest req = SignUpRequest.builder().email("email@email.com").password("sdfdf").build();
 
@@ -147,7 +127,7 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("status").value(400))
-                .andExpect((jsonPath("message").value("password need at least 6 character")));
+                .andExpect((jsonPath("message").value("password between 6 and 50 character")));
     }
 
     @Test
@@ -170,7 +150,7 @@ public class AuthControllerTest {
 
     @Test
     public void LoginTestFailedWrongEmailOrPassword() throws Exception {
-        LoginRequest req = LoginRequest.builder().email("email@test.com").password("test").build();
+        LoginRequest req = LoginRequest.builder().email("email@test.com").password("password").build();
 
         when(authService.loginOtp(req)).thenThrow(new CustomException(404, "user not found"));
 
@@ -183,7 +163,7 @@ public class AuthControllerTest {
 
     @Test
     public void LoginTestFailedWrongEmailFormat() throws Exception {
-        LoginRequest req = LoginRequest.builder().email("email").password("test").build();
+        LoginRequest req = LoginRequest.builder().email("emailtest").password("password").build();
 
         mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
@@ -194,7 +174,7 @@ public class AuthControllerTest {
 
     @Test
     public void LoginTestFailedEmailEmpty() throws Exception {
-        LoginRequest req = LoginRequest.builder().email("").password("test").build();
+        LoginRequest req = LoginRequest.builder().email("").password("password").build();
 
         mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
@@ -210,7 +190,7 @@ public class AuthControllerTest {
         mockMvc.perform(post("/auth/login").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("message").value("password required"))
+                .andExpect(jsonPath("message").value("password between 6 and 50 character"))
                 .andExpect(jsonPath("status").value(400));
     }
 

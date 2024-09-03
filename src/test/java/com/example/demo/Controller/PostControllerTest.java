@@ -6,9 +6,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.Arrays;
+import java.util.List;
 
+import com.example.demo.Dto.Response.CustomPage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +43,9 @@ import lombok.extern.slf4j.Slf4j;
 @AutoConfigureMockMvc
 @Slf4j
 public class PostControllerTest {
+    PostDto post1 = PostDto.builder().content("content1").build();
+    PostDto post2 = PostDto.builder().content("content2").build();
+    PostDto post3 = PostDto.builder().content("content3").build();
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,10 +53,8 @@ public class PostControllerTest {
     private PostService postService;
     @Mock
     private PostRepository postRepository;
-
-    PostDto post1 = PostDto.builder().content("content1").build();
-    PostDto post2 = PostDto.builder().content("content2").build();
-    PostDto post3 = PostDto.builder().content("content3").build();
+    @Autowired
+    private ModelMapper mapper;
 
     private static String asJsonString(Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);
@@ -59,7 +64,8 @@ public class PostControllerTest {
     @WithMockUser
     public void getPaginatePostSuccess() throws Exception {
         Page<PostDto> pagePost = new PageImpl<>(Arrays.asList(post1, post2, post3));
-        when(postService.findAndPaginate(any(Pageable.class), anyString())).thenReturn(pagePost);
+        when(postService.findAndPaginate(any(Pageable.class), anyString()))
+                .thenReturn(mapper.map(pagePost, new TypeToken<CustomPage<PostDto>>() {}.getType()));
         mockMvc.perform(get("/post").param("page", "0").param("size", "10").param("search", "")
                 .param("sortBy", "id").param("order", "asc").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -86,7 +92,8 @@ public class PostControllerTest {
     @WithMockUser
     public void getMyPostsSuccess() throws Exception {
         Page<PostDto> response = new PageImpl<>(Arrays.asList(post1, post2, post3));
-        when(postService.findMyPostsAndPaginate(any(Pageable.class), anyString())).thenReturn(response);
+        when(postService.findMyPostsAndPaginate(any(Pageable.class), anyString()))
+                .thenReturn(mapper.map(response, new TypeToken<CustomPage<PostDto>>() {}.getType()));
         mockMvc.perform(get("/post/my-posts").param("page", "0").param("size", "10")
                 .param("search", "").param("sortBy", "id").param("order", "asc")).andExpect(status().isOk())
                 .andExpect(jsonPath("status").value(200))
@@ -141,13 +148,15 @@ public class PostControllerTest {
     @WithMockUser
     public void createPostSuccess() throws Exception {
         CreatePostRequest req = CreatePostRequest.builder().content("content test").build();
+        PostDto postDto = mapper.map(req, PostDto.class);
+
+        when(postService.createPost(req)).thenReturn(postDto);
+
         mockMvc.perform(
                 post("/post").contentType(MediaType.APPLICATION_JSON).content(asJsonString(req)))
                 .andExpect(status().isOk()).andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.status").value(true))
-                .andExpect(jsonPath("data.message").value("success"));
+                .andExpect(jsonPath("data").value(postDto));
     }
 
     @Test
@@ -160,47 +169,23 @@ public class PostControllerTest {
                 .andExpect(jsonPath("message").value("content or image required"));
     }
 
-    @Test
-    @WithMockUser
-    public void createPostSuccessWithFormDataReq() throws Exception {
-        MockMultipartFile mockFile1 =
-                new MockMultipartFile("images", "img.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
-        MockMultipartFile mockFile2 =
-                new MockMultipartFile("images", "img.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
-        MockMultipartFile mockFile3 =
-                new MockMultipartFile("images", "img.jpeg", MediaType.IMAGE_JPEG_VALUE, "images".getBytes());
-        mockMvc.perform(multipart(HttpMethod.POST, "/post").file(mockFile1).file(mockFile2)
-                .file(mockFile3).param("content", "test content").contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isOk()).andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
-    }
 
-    @Test
-    @WithMockUser
-    public void createPostFailedWithFormDataReqEmpty() throws Exception {
-        mockMvc.perform(
-                multipart(HttpMethod.POST, "/post").contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("status").value(400))
-                .andExpect(jsonPath("message").value("content or image required"));
-    }
 
     @Test
     @WithMockUser
     public void likePostSuccess() throws Exception {
 
         LikeRequest req = LikeRequest.builder().postId(1L).build();
+        PostDto postDto = PostDto.builder().content("content test").build();
+
+        when(postService.like(anyLong())).thenReturn(postDto);
 
         mockMvc.perform(post("/post/like").content(asJsonString(req))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data").value(postDto));
     }
 
     @Test
@@ -221,36 +206,31 @@ public class PostControllerTest {
     @Test
     @WithMockUser
     public void editPostSuccess() throws Exception{
-        MockMultipartFile mockFile = new MockMultipartFile("images","img.jpeg", MediaType.IMAGE_JPEG_VALUE, "img".getBytes());
+        UpdatePostRequest req =
+                UpdatePostRequest.builder().content("content test").images(List.of()).status("PUBLIC").build();
+        PostDto postDto = PostDto.builder().content("content test").build();
 
-        mockMvc.perform(multipart(HttpMethod.PUT, "/post/1")
-                .file(mockFile)
-                .param("removeImage[]", "url to remove")
-                .param("content", "new content")
-                .param("status", "active")
-                .contentType(MediaType.MULTIPART_FORM_DATA))
+        when(postService.editPost(1L, req)).thenReturn(postDto);
+
+        mockMvc.perform(put("/post/1").content(asJsonString(req))
+                .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message").value("success"))
                 .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("data").value(postDto));
     }
 
     @Test
     @WithMockUser
     public void editPostFailedPostNotFound() throws Exception{
-        MockMultipartFile mockFile = new MockMultipartFile("images","img.jpeg", MediaType.IMAGE_JPEG_VALUE, "img".getBytes());
+        UpdatePostRequest req =
+                UpdatePostRequest.builder().content("content test").images(List.of()).status("PUBLIC").build();
 
         doThrow(new CustomException(404 ,"post not found")).when(postService).editPost(anyLong(),
                 any(UpdatePostRequest.class));
 
-        mockMvc.perform(multipart(HttpMethod.PUT, "/post/1")
-                .file(mockFile)
-                .param("removeImage[]", "url to remove")
-                .param("content", "new content")
-                .param("status", "active")
-                .contentType(MediaType.MULTIPART_FORM_DATA))
+        mockMvc.perform(put("/post/1").content(asJsonString(req))
+                .contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("message").value("post not found"))
                 .andExpect(jsonPath("status").value(404));
@@ -259,13 +239,11 @@ public class PostControllerTest {
     @Test
     @WithMockUser
     public void deletePostSuccess() throws Exception {
+
         mockMvc.perform(delete("/post/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("data").exists())
-                .andExpect(jsonPath("data.message").value("success"))
-                .andExpect(jsonPath("data.status").value(true));
+                .andExpect(jsonPath("message").value("success"));
     }
 
     @Test
@@ -291,5 +269,24 @@ public class PostControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("status").value(403))
                 .andExpect(jsonPath("message").value("you don't have permission to delete this post"));
+    }
+
+    @Test
+    @WithMockUser
+    public void getFriendPostSuccess() throws Exception {
+        CustomPage<PostDto> page = new CustomPage<>();
+        page.setSize(1);
+        page.setTotalElements(1);
+        page.setTotalPages(1);
+        page.setContent(List.of(post1));
+        page.setPageNumber(1);
+
+        when(postService.getFriendPost(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/post/friend-posts").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("status").value(200))
+                .andExpect(jsonPath("message").value("success"))
+                .andExpect(jsonPath("data.content[0].content").value(post1.getContent()));
     }
 }
