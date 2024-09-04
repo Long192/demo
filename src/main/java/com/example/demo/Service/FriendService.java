@@ -28,8 +28,6 @@ public class FriendService {
     @Autowired
     private FriendRepository friendRepository;
     @Autowired
-    private PostService postService;
-    @Autowired
     private ModelMapper mapper;
 
 
@@ -53,9 +51,16 @@ public class FriendService {
 
     public UserDto acceptFriendRequest(Long requesterId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Friend friend = friendRepository
-                .findByFriendRequesterAndFriendReceiverAndStatus(requesterId, me.getId(), FriendStatusEnum.pending)
-                .orElseThrow(() -> new CustomException(404, "friend request not found or already accepted"));
+        Friend friend =
+                findByFriendRequesterAndFriendReceiverAndStatus(requesterId, me.getId(), FriendStatusEnum.pending);
+        if(friend == null){
+            throw new CustomException(404, "friend request not found or already friend");
+        }
+
+        if(friend.getFriendReceiver().getId() != me.getId()){
+            throw new CustomException(404, "cannot accept friend request");
+        }
+
         friend.setStatus(FriendStatusEnum.accepted);
         Friend result = friendRepository.save(friend);
         return mapper.map(result.getFriendRequester(), UserDto.class);
@@ -67,6 +72,10 @@ public class FriendService {
                 .findByFriendRequesterAndFriendReceiverAndStatus(requesterId, me.getId(), FriendStatusEnum.pending)
                 .orElseThrow(() -> new CustomException(404, "friend not found"));
         friendRepository.delete(friend);
+    }
+
+    public Friend findByFriendRequesterAndFriendReceiverAndStatus(Long requesterId, Long receiverId, FriendStatusEnum status) {
+        return friendRepository.findByFriendRequesterAndFriendReceiverAndStatus(requesterId, receiverId, status).orElse(null);
     }
 
     public void removeFriend(Long friendId) throws Exception {
@@ -134,9 +143,5 @@ public class FriendService {
         User userToken = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Friend> friends = friendRepository.findAllFriends(userToken.getId());
         return friendToUser(friends, userToken.getId());
-    }
-
-    public Friend findFriend(Long id) {
-        return friendRepository.findFriend(id).orElse(null);
     }
 }

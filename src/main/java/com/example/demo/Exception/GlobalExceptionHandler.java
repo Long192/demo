@@ -2,6 +2,7 @@ package com.example.demo.Exception;
 
 import java.net.MalformedURLException;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -70,7 +71,7 @@ public class GlobalExceptionHandler<T> {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<CustomResponse<T>> handleMaxSizeException(MaxUploadSizeExceededException exc) {
         CustomResponse<T> response = new CustomResponse<>();
-        response.setStatus(400);
+        response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
         response.setMessage("image to large");
         return ResponseEntity.badRequest().body(response);
     }

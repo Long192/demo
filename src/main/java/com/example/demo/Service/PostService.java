@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.example.demo.Model.*;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +19,14 @@ import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Enum.FriendStatusEnum;
 import com.example.demo.Enum.PostStatusEnum;
-import com.example.demo.Enum.StatusEnum;
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.Favourite;
+import com.example.demo.Model.Friend;
+import com.example.demo.Model.Image;
+import com.example.demo.Model.Post;
+import com.example.demo.Model.User;
 import com.example.demo.Repository.PostRepository;
 
 @Service
@@ -67,7 +71,8 @@ public class PostService {
     }
 
     private Page<PostDto> findByUserIdsOrderByCreatedAt(List<Long> ids, Pageable pageable) {
-        Page<Post> posts = postRepository.findByUserIdsOrderByCreatedAt(ids, pageable);
+        User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Page<Post> posts = postRepository.findByUserIdsOrderByCreatedAt(ids, me.getId(), pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
     }
 
@@ -102,12 +107,14 @@ public class PostService {
         }
 
         if(post.getStatus() == PostStatusEnum.FRIEND_ONLY) {
-            Friend friend = friendService.findFriend(post.getUser().getId());
+            Friend friend = friendService.findByFriendRequesterAndFriendReceiverAndStatus(me.getId(),
+                    post.getUser().getId(), FriendStatusEnum.accepted);
+
             if(friend != null){
               return post;
             }
 
-            throw new CustomException(403, "you dont have permission to see this post");
+            throw new CustomException(403, "you don't have permission to access this post");
         }
 
         if(post.getStatus() == PostStatusEnum.PRIVATE) {
@@ -115,7 +122,7 @@ public class PostService {
                 return post;
             }
 
-            throw new CustomException(403, "you dont have permission to see this post");
+            throw new CustomException(403, "you don't have permission to access this post");
         }
 
         return null;
@@ -148,16 +155,18 @@ public class PostService {
     public PostDto like(Long postId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
-        Post post = findById(postId);
-        Optional<Favourite> favourite = favouriteService.findByUserIdAndPostId(user.getId(), post.getId());
+        PostDto postDto = findOneById(postId);
+        Optional<Favourite> favourite = favouriteService.findByUserIdAndPostId(user.getId(), postDto.getId());
         if (favourite.isPresent()) {
             favouriteService.delete(favourite.get());
             return null;
         }
 
+        Post post = findById(postId);
+
         Favourite newFavourite = Favourite.builder().post(post).user(user).build();
 
-        return modelMapper.map(favouriteService.save(newFavourite), PostDto.class);
+        return modelMapper.map(favouriteService.save(newFavourite).getPost(), PostDto.class);
         
     }
 

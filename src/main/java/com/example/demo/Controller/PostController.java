@@ -1,6 +1,5 @@
 package com.example.demo.Controller;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,7 +21,6 @@ import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Enum.OrderEnum;
-import com.example.demo.Model.Post;
 import com.example.demo.Service.PostService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,24 +33,6 @@ import jakarta.validation.Valid;
 public class PostController {
     @Autowired
     private PostService postService;
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Operation(summary = "get posts", description = "get all paginated posts")
-    @GetMapping("")
-    public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getPosts(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "") String search,
-        @RequestParam(defaultValue = "id") String sortBy,
-        @RequestParam(defaultValue = "asc") OrderEnum order
-    ) throws Exception {
-        Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
-        PageRequest pageable = PageRequest.of(page, size, sort);
-        return ResponseEntity.ok(
-            CustomResponse.<CustomPage<PostDto>>builder().data(postService.findAndPaginate(pageable, search)).build()
-        );
-    }
 
     @Operation(summary = "get my post", description = "get all post of the currently logged in user")
     @GetMapping("/my-posts")
@@ -111,8 +91,8 @@ public class PostController {
     }
 
     
-    @Operation(summary = "get friend post", description = "get a list of friends posts from 1 week ago to the present")
-    @GetMapping("/friend-posts")
+    @Operation(summary = "get friend post", description = "get a list of posts from 1 week ago to the present")
+    @GetMapping("")
     public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getFriendPost(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size

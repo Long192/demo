@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.List;
 
-import com.example.demo.Dto.Response.CustomPage;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.modelmapper.ModelMapper;
@@ -21,18 +20,16 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.LikeRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.Post;
 import com.example.demo.Repository.PostRepository;
 import com.example.demo.Service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,10 +61,9 @@ public class PostControllerTest {
     @WithMockUser
     public void getPaginatePostSuccess() throws Exception {
         Page<PostDto> pagePost = new PageImpl<>(Arrays.asList(post1, post2, post3));
-        when(postService.findAndPaginate(any(Pageable.class), anyString()))
+        when(postService.getFriendPost(any(Pageable.class)))
                 .thenReturn(mapper.map(pagePost, new TypeToken<CustomPage<PostDto>>() {}.getType()));
-        mockMvc.perform(get("/post").param("page", "0").param("size", "10").param("search", "")
-                .param("sortBy", "id").param("order", "asc").contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/post").param("page", "0").param("size", "10").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("message").value("success"))
@@ -75,17 +71,6 @@ public class PostControllerTest {
                 .andExpect(jsonPath("data.content[0].content").value("content1"))
                 .andExpect(jsonPath("data.content[1].content").value("content2"))
                 .andExpect(jsonPath("data.content[2].content").value("content3"));
-    }
-
-    @Test
-    @WithMockUser
-    public void getPaginatePostFailedWrongSortBy() throws Exception {
-        when(postService.findAndPaginate(any(Pageable.class), anyString()))
-                .thenThrow(new Exception("cannot find attribute"));
-        mockMvc.perform(get("/post").param("page", "0").param("size", "10").param("search", "")
-                .param("sortBy", "safasdfasdf").param("order", "asc")).andExpect(status().isBadRequest())
-                .andExpect(jsonPath("status").value(400))
-                .andExpect(jsonPath("message").value("cannot find attribute"));
     }
 
     @Test
@@ -118,8 +103,8 @@ public class PostControllerTest {
     @Test
     @WithMockUser
     public void getPostByIdSuccess() throws Exception {
-        Post post = Post.builder().content("content1").build();
-        when(postService.findById(anyLong())).thenReturn(post);
+        PostDto post = PostDto.builder().content("content1").build();
+        when(postService.findOneById(anyLong())).thenReturn(post);
         mockMvc.perform(get("/post/1")).andExpect(status().isOk())
                 .andExpect(jsonPath("status").value(200))
                 .andExpect(jsonPath("message").value("success"))
@@ -138,7 +123,7 @@ public class PostControllerTest {
     @Test
     @WithMockUser
     public void getPostByIdFailedPostNotFound() throws Exception {
-        when(postService.findById(anyLong())).thenThrow(new Exception("post not found"));
+        when(postService.findOneById(anyLong())).thenThrow(new Exception("post not found"));
         mockMvc.perform(get("/post/5")).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message").value("post not found"))
                 .andExpect(jsonPath("status").value(400));
@@ -269,24 +254,5 @@ public class PostControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("status").value(403))
                 .andExpect(jsonPath("message").value("you don't have permission to delete this post"));
-    }
-
-    @Test
-    @WithMockUser
-    public void getFriendPostSuccess() throws Exception {
-        CustomPage<PostDto> page = new CustomPage<>();
-        page.setSize(1);
-        page.setTotalElements(1);
-        page.setTotalPages(1);
-        page.setContent(List.of(post1));
-        page.setPageNumber(1);
-
-        when(postService.getFriendPost(any(Pageable.class))).thenReturn(page);
-
-        mockMvc.perform(get("/post/friend-posts").contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("status").value(200))
-                .andExpect(jsonPath("message").value("success"))
-                .andExpect(jsonPath("data.content[0].content").value(post1.getContent()));
     }
 }

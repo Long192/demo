@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.example.demo.Dto.Response.CustomPage;
-import com.example.demo.Enum.PostStatusEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -19,9 +17,10 @@ import org.mockito.Spy;
 import org.modelmapper.ModelMapper;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.*;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -30,10 +29,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.Dto.Request.CreatePostRequest;
 import com.example.demo.Dto.Request.UpdatePostRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
-import com.example.demo.Enum.StatusEnum;
+import com.example.demo.Enum.FriendStatusEnum;
+import com.example.demo.Enum.PostStatusEnum;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Favourite;
+import com.example.demo.Model.Friend;
 import com.example.demo.Model.Image;
 import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
@@ -64,10 +66,26 @@ public class PostServiceTest {
     User user = User.builder().id(1L).email("email@email.com").build();
     User user2 = User.builder().id(2L).email("email@email.com").likePosts(List.of()).build();
 
-    Post post1 = Post.builder().content("content1").user(user).likedByUsers(List.of()).images(List.of()).build();
-    Post post2 = Post.builder().content("content2").user(user).build();
-    Post post3 = Post.builder().content("content3").user(user).build();
-    Post post4 = Post.builder().content("content4").user(user2).build();
+    Post post1 = Post.builder()
+            .content("content1")
+            .user(user).likedByUsers(List.of())
+            .images(List.of()).status(PostStatusEnum.PUBLIC)
+            .build();
+    Post post2 = Post.builder()
+            .content("content2")
+            .user(user)
+            .status(PostStatusEnum.PUBLIC)
+            .build();
+    Post post3 = Post.builder()
+            .content("content3")
+            .user(user)
+            .status(PostStatusEnum.PUBLIC)
+            .build();
+    Post post4 = Post.builder()
+            .content("content4")
+            .user(user2)
+            .status(PostStatusEnum.PUBLIC)
+            .build();
 
     @BeforeEach
     public void setUp() {
@@ -102,7 +120,6 @@ public class PostServiceTest {
     public void createdPostFailedStatusInvalid() {
         CreatePostRequest req =
                 CreatePostRequest.builder().images(List.of("url")).status("fake").content("content").build();
-        User user = User.builder().id(1L).email("email@email.com").fullname("fullname").build();
 
         Exception exception = assertThrows(Exception.class, () -> postService.createPost(req));
 
@@ -432,12 +449,103 @@ public class PostServiceTest {
         Page<Post> posts = new PageImpl<>(List.of(post1, post2, post3));
 
         when(friendService.getAllFriend()).thenReturn(List.of(user, user2));
-        when(postRepository.findByUserIdsOrderByCreatedAt(any(), any(Pageable.class))).thenReturn(posts);
+        when(postRepository.findByUserIdsOrderByCreatedAt(any(), any(), any(Pageable.class))).thenReturn(posts);
 
         CustomPage<PostDto> res = postService.getFriendPost(PageRequest.of(0, 10));
 
         assertNotNull(res);
         assertEquals(res.getContent().size(), 3);
         assertEquals(res.getTotalElements(), 3);
+    }
+
+    @Test
+    public void findOneByIdSuccess() throws Exception {
+        Post testPost = Post.builder()
+                .id(1L)
+                .content("content1")
+                .user(user)
+                .status(PostStatusEnum.PUBLIC)
+                .build();
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+
+        PostDto res = postService.findOneById(1L);
+
+        assertNotNull(res);
+        assertEquals(res.getContent(), post1.getContent());
+    }
+
+    @Test
+    public void findOneByIdStatusFriendSuccess() throws Exception {
+        Post testPost = Post.builder()
+                .id(1L)
+                .content("content1")
+                .user(user2)
+                .status(PostStatusEnum.FRIEND_ONLY)
+                .build();
+
+        Friend friend = Friend.builder().id(1L).friendReceiver(user).friendRequester(user2).build();
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+        when(friendService.findByFriendRequesterAndFriendReceiverAndStatus(anyLong(), anyLong(), any(FriendStatusEnum.class))).thenReturn(friend);
+
+        PostDto res = postService.findOneById(1L);
+
+        assertNotNull(res);
+        assertEquals(res.getContent(), testPost.getContent());
+    }
+
+    @Test
+    public void findOneByIdStatusFriendFailed() throws Exception {
+        Post testPost = Post.builder()
+                .id(1L)
+                .content("content1")
+                .user(user2)
+                .status(PostStatusEnum.FRIEND_ONLY)
+                .build();
+
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+        when(friendService.findByFriendRequesterAndFriendReceiverAndStatus(anyLong(), anyLong(), any(FriendStatusEnum.class))).thenReturn(null);
+
+        CustomException exception = assertThrows(CustomException.class, () -> postService.findOneById(1L));
+
+        assertNotNull(exception);
+        assertEquals(exception.getErrorCode(), 403);
+        assertEquals(exception.getMessage(), "you don't have permission to access this post");
+    }
+
+    @Test
+    public void findOneByIdFailedStatusPrivate() throws Exception {
+        Post testPost = Post.builder()
+                .id(1L)
+                .content("content1")
+                .user(user2)
+                .status(PostStatusEnum.PRIVATE)
+                .build();
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+
+        CustomException exception = assertThrows(CustomException.class, () -> postService.findOneById(1L));
+
+        assertEquals(exception.getErrorCode(), 403);
+        assertEquals(exception.getMessage(), "you don't have permission to access this post");
+    }
+
+    @Test
+    public void findOneByIdSuccesstatusPrivate() throws Exception {
+        Post testPost = Post.builder()
+                .id(1L)
+                .content("content1")
+                .user(user)
+                .status(PostStatusEnum.PRIVATE)
+                .build();
+
+        when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
+
+        PostDto res = postService.findOneById(1L);
+
+        assertNotNull(res);
+        assertEquals(res.getContent(), testPost.getContent());
     }
 }

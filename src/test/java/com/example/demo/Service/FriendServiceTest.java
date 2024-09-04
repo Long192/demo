@@ -3,8 +3,10 @@ package com.example.demo.Service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 import java.util.List;
 import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -12,8 +14,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Page;
@@ -25,6 +25,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.FriendStatusEnum;
@@ -169,7 +170,7 @@ public class FriendServiceTest {
                 () -> friendService.acceptFriendRequest(user1.getId()));
 
         assertNotNull(exception);
-        assertEquals(exception.getMessage(), "friend request not found or already accepted");
+        assertEquals(exception.getMessage(), "friend request not found or already friend");
         assertEquals(exception.getErrorCode(), 404);
     }
 
@@ -182,7 +183,7 @@ public class FriendServiceTest {
                 assertThrows(CustomException.class, () -> friendService.acceptFriendRequest(user1.getId()));
 
         assertNotNull(exception);
-        assertEquals(exception.getMessage(), "friend request not found or already accepted");
+        assertEquals(exception.getMessage(), "friend request not found or already friend");
         assertEquals(exception.getErrorCode(), 404);
     }
 

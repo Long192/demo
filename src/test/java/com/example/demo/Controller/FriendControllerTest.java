@@ -8,8 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 import java.util.List;
 
-import com.example.demo.Dto.Response.CustomPage;
-import com.example.demo.Dto.Response.UserDto;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -25,7 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.Dto.Request.FriendRequest;
-import com.example.demo.Dto.Response.PostDto;
+import com.example.demo.Dto.Response.CustomPage;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Model.User;
 import com.example.demo.Service.FriendService;
 import com.fasterxml.jackson.databind.ObjectMapper;
