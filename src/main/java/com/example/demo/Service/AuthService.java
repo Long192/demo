@@ -118,11 +118,20 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(404, "user not found"));
         RefreshToken refreshToken = refreshService.findByUserId(user.getId());
         String jwt = jwtUtil.generateToken(user);
+        String refresh;
+
+
+        if(refreshToken == null || refreshToken.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))){
+            if(refreshToken!= null){
+                refreshService.deleteRefreshToken(refreshToken);
+            }
+            refresh = refreshService.createRefreshToken(user);
+        }else{
+            refresh = refreshToken.getToken();
+        }
 
         response.setToken(jwt);
-        response.setRefreshToken(
-                refreshToken != null ? refreshToken.getToken() : refreshService.createRefreshToken(user)
-        );
+        response.setRefreshToken(refresh);
         response.setId(user.getId());
         response.setAddress(user.getAddress());
         response.setDob(user.getDob() != null ? user.getDob().toString() : null);

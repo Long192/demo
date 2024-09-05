@@ -9,22 +9,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Arrays;
 
-import com.example.demo.Dto.Response.UserDto;
 import org.junit.jupiter.api.Test;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.demo.Dto.Request.UpdateUserRequest;
+import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Model.User;
 import com.example.demo.Service.ExcelService;
 import com.example.demo.Service.UserService;
@@ -44,8 +41,6 @@ public class UserControllerTest {
     User user1 = User.builder().email("email1").fullname("fullname1").build();
     User user2 = User.builder().email("email2").fullname("fullname2").build();
     User user3 = User.builder().email("email3").fullname("fullname3").build();
-    @Autowired
-    private ModelMapper mapper;
 
     private static String asJsonString(final Object obj) throws Exception {
         return new ObjectMapper().writeValueAsString(obj);

@@ -38,6 +38,10 @@ public class RefreshService {
     }
 
     public RefreshToken findByUserId(Long id) {
-         return refreshRepository.findByUserId(id).orElse(null);
+        return refreshRepository.findByUserId(id).orElse(null);
+    }
+
+    public void deleteRefreshToken(RefreshToken refreshToken) {
+        refreshRepository.delete(refreshToken);
     }
 }

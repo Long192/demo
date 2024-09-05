@@ -91,7 +91,7 @@ public class PostController {
     }
 
     
-    @Operation(summary = "get friend post", description = "get a list of posts from 1 week ago to the present")
+    @Operation(summary = "get post", description = "get a list of posts")
     @GetMapping("")
     public ResponseEntity<CustomResponse<CustomPage<PostDto>>> getFriendPost(
         @RequestParam(defaultValue = "0") int page,

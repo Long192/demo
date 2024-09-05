@@ -251,7 +251,11 @@ public class AuthServiceTest {
                 .tryNumber(5)
                 .build();
 
-        RefreshToken refreshToken = RefreshToken.builder().user(user).token("refreshToken").build();
+        RefreshToken refreshToken = RefreshToken.builder()
+                .user(user)
+                .token("refreshToken")
+                .expiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)))
+                .build();
 
         Cache cache = mock(Cache.class);
 
