@@ -10,6 +10,7 @@ import com.example.demo.Dto.Request.UpdateCommentRequest;
 import com.example.demo.Dto.Response.CommentDto;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Comment;
+import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.CommentRepository;
 
@@ -28,7 +29,11 @@ public class CommentService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Comment comment = new Comment();
         comment.setContent(request.getContent());
-        comment.setPost(postService.findById(request.getPostId()));
+        Post post = postService.findOneById(request.getPostId());
+        if(post == null){
+            throw new CustomException(404, "post not found");
+        }
+        comment.setPost(post);
         comment.setUser(userService.findById(user.getId()));
         Comment result = commentRepository.save(comment);
         return mapper.map(result, CommentDto.class);

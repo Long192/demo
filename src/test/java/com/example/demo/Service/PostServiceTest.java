@@ -469,7 +469,7 @@ public class PostServiceTest {
 
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 
-        PostDto res = postService.findOneById(1L);
+        Post res = postService.findOneById(1L);
 
         assertNotNull(res);
         assertEquals(res.getContent(), post1.getContent());
@@ -489,7 +489,7 @@ public class PostServiceTest {
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
         when(friendService.findByFriendRequesterAndFriendReceiverAndStatus(anyLong(), anyLong(), any(FriendStatusEnum.class))).thenReturn(friend);
 
-        PostDto res = postService.findOneById(1L);
+        Post res = postService.findOneById(1L);
 
         assertNotNull(res);
         assertEquals(res.getContent(), testPost.getContent());
@@ -543,7 +543,7 @@ public class PostServiceTest {
 
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(testPost));
 
-        PostDto res = postService.findOneById(1L);
+        Post res = postService.findOneById(1L);
 
         assertNotNull(res);
         assertEquals(res.getContent(), testPost.getContent());

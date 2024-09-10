@@ -30,6 +30,7 @@ import com.example.demo.Dto.Request.UpdatePostRequest;
 import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.PostDto;
 import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.Post;
 import com.example.demo.Repository.PostRepository;
 import com.example.demo.Service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -103,7 +104,7 @@ public class PostControllerTest {
     @Test
     @WithMockUser
     public void getPostByIdSuccess() throws Exception {
-        PostDto post = PostDto.builder().content("content1").build();
+        Post post = Post.builder().content("content1").build();
         when(postService.findOneById(anyLong())).thenReturn(post);
         mockMvc.perform(get("/post/1")).andExpect(status().isOk())
                 .andExpect(jsonPath("status").value(200))

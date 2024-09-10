@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.example.demo.Dto.Request.AddCommentRequest;
 import com.example.demo.Dto.Request.UpdateCommentRequest;
+import com.example.demo.Enum.PostStatusEnum;
 import com.example.demo.Exception.CustomException;
 import com.example.demo.Model.Comment;
 import com.example.demo.Model.Post;
@@ -41,7 +42,7 @@ public class CommentServiceTest {
     User user = User.builder().id(1L).email("email@email.com").build();
     AddCommentRequest addReq = AddCommentRequest.builder().content("content").postId(1L).build();
     UpdateCommentRequest updateReq = UpdateCommentRequest.builder().content("new content").build();
-    Post post = Post.builder().id(1L).content("content").user(user).build();
+    Post post = Post.builder().id(1L).content("content").user(user).status(PostStatusEnum.PUBLIC).build();
     Comment updatedComment = Comment.builder().content("new content").post(post).user(user).build();
     Comment comment = Comment.builder().content("content").post(post).user(user).build();
 
@@ -55,7 +56,7 @@ public class CommentServiceTest {
 
     @Test
     public void addCommentSuccess() throws Exception {
-        when(postService.findById(addReq.getPostId())).thenReturn(post);
+        when(postService.findOneById(addReq.getPostId())).thenReturn(post);
         when(userService.findById(user.getId())).thenReturn(user);
 
         commentService.addComment(addReq);
@@ -82,7 +83,7 @@ public class CommentServiceTest {
 
     @Test
     public void addCommentFailedUserNotFound() throws Exception {
-        when(postService.findById(post.getId())).thenReturn(post);
+        when(postService.findOneById(post.getId())).thenReturn(post);
         when(userService.findById(user.getId())).thenThrow(new CustomException(404, "user not found"));
 
         CustomException exception = assertThrows(CustomException.class, () -> commentService.addComment(addReq));

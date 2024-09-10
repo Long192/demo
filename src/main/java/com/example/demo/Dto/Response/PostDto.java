@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.example.demo.Enum.PostStatusEnum;
-import com.example.demo.Enum.StatusEnum;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

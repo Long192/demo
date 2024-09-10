@@ -1,5 +1,6 @@
 package com.example.demo.Controller;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,6 +34,8 @@ import jakarta.validation.Valid;
 public class PostController {
     @Autowired
     private PostService postService;
+    @Autowired
+    private ModelMapper mapper;
 
     @Operation(summary = "get my post", description = "get all post of the currently logged in user")
     @GetMapping("/my-posts")
@@ -53,7 +56,8 @@ public class PostController {
     @Operation(summary = "get post by id", description = "get a post by id of the post")
     @GetMapping("/{id}")
     public ResponseEntity<CustomResponse<PostDto>> getPostById(@PathVariable String id) throws Exception {
-        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(postService.findOneById(Long.valueOf(id))).build());
+        PostDto post = mapper.map(postService.findOneById(Long.valueOf(id)), PostDto.class);
+        return ResponseEntity.ok(CustomResponse.<PostDto>builder().data(post).build());
     }
 
     @Operation(summary = "add new post", description = "add a new post")

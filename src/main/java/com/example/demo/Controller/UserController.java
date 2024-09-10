@@ -3,9 +3,10 @@ package com.example.demo.Controller;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +16,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.example.demo.Dto.Request.UpdateUserRequest;
+import com.example.demo.Dto.Response.CustomPage;
 import com.example.demo.Dto.Response.CustomResponse;
 import com.example.demo.Dto.Response.UserDto;
 import com.example.demo.Enum.OrderEnum;
 import com.example.demo.Service.ExcelService;
 import com.example.demo.Service.UserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,7 +43,7 @@ public class UserController {
 
     @Operation(summary = "get all user", description = "get all user")
     @GetMapping("")
-    public ResponseEntity<CustomResponse<Page<UserDto>>> getAllUser(
+    public ResponseEntity<CustomResponse<CustomPage<UserDto>>> getAllUser(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "") String search,
@@ -48,8 +52,9 @@ public class UserController {
     ) throws Exception {
         Sort sort = Sort.by(Sort.Direction.fromString(order.toString()), sortBy);
         PageRequest pageable = PageRequest.of(page, size, sort);
-        Page<UserDto> users = userService.findAll(pageable, search).map(source -> mapper.map(source, UserDto.class));
-        return ResponseEntity.ok(CustomResponse.<Page<UserDto>>builder().data(users).build());
+        CustomPage<UserDto> users =
+                mapper.map(userService.findAll(pageable, search), new TypeToken<CustomPage<UserDto>>(){}.getType());
+        return ResponseEntity.ok(CustomResponse.<CustomPage<UserDto>>builder().data(users).build());
     }
 
     @Operation(summary = "report", description = "export excel file to show how many new post, like, comment, friend current logged in user have in previous week ")

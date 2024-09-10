@@ -43,8 +43,6 @@ public class PostService {
     private FavouriteService favouriteService;
     @Autowired
     private FriendService friendService;
-    @Autowired
-    private ModelMapper mapper;
 
     @Transactional
     public PostDto createPost(CreatePostRequest request) throws Exception {
@@ -65,7 +63,7 @@ public class PostService {
         public CustomPage<PostDto> getFriendPost(Pageable pageable) {
         List<Long> friendIds = new ArrayList<>();
         friendService.getAllFriend().forEach(user -> friendIds.add(user.getId()));
-        return mapper.map(findByUserIdsOrderByCreatedAt(friendIds, pageable),
+        return modelMapper.map(findByUserIdsOrderByCreatedAt(friendIds, pageable),
                 new TypeToken<CustomPage<PostDto>>() {}.getType());
 
     }
@@ -99,9 +97,9 @@ public class PostService {
         return postRepository.findById(id).orElseThrow(() -> new CustomException(404, "post not found"));
     }
 
-    public PostDto findOneById(Long id) throws Exception {
+    public Post findOneById(Long id) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        PostDto post = mapper.map(findById(id), PostDto.class);
+        Post post = findById(id);
         if(post.getStatus() == PostStatusEnum.PUBLIC) {
             return post;
         }
@@ -110,7 +108,7 @@ public class PostService {
             Friend friend = friendService.findByFriendRequesterAndFriendReceiverAndStatus(me.getId(),
                     post.getUser().getId(), FriendStatusEnum.accepted);
 
-            if(friend != null){
+            if(friend != null || me.getId().equals(post.getUser().getId())){
               return post;
             }
 
@@ -155,7 +153,7 @@ public class PostService {
     public PostDto like(Long postId) throws Exception {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userService.findById(me.getId());
-        PostDto postDto = findOneById(postId);
+        PostDto postDto = modelMapper.map(findOneById(postId), PostDto.class);
         Optional<Favourite> favourite = favouriteService.findByUserIdAndPostId(user.getId(), postDto.getId());
         if (favourite.isPresent()) {
             favouriteService.delete(favourite.get());
