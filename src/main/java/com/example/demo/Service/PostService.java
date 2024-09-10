@@ -1,9 +1,11 @@
 package com.example.demo.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -72,6 +74,11 @@ public class PostService {
         User me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Page<Post> posts = postRepository.findByUserIdsOrderByCreatedAt(ids, me.getId(), pageable);
         return posts.map(source -> modelMapper.map(source, PostDto.class));
+    }
+
+    public Long countPost(Long id){
+        return postRepository.countPostByUserIdAndCreatedAtGreaterThan(id,
+                new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)));
     }
 
     public CustomPage<PostDto> findAndPaginate(Pageable pageable, String textSearch) throws Exception {
@@ -163,8 +170,10 @@ public class PostService {
         Post post = findById(postId);
 
         Favourite newFavourite = Favourite.builder().post(post).user(user).build();
+        favouriteService.save(newFavourite);
+        post.getLikedByUsers().add(user);
 
-        return modelMapper.map(favouriteService.save(newFavourite).getPost(), PostDto.class);
+        return modelMapper.map(post, PostDto.class);
         
     }
 

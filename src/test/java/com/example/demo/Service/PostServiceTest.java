@@ -68,7 +68,7 @@ public class PostServiceTest {
 
     Post post1 = Post.builder()
             .content("content1")
-            .user(user).likedByUsers(List.of())
+            .user(user).likedByUsers(new ArrayList<>())
             .images(List.of()).status(PostStatusEnum.PUBLIC)
             .build();
     Post post2 = Post.builder()

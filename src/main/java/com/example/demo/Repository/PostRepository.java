@@ -36,4 +36,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT p FROM Post p WHERE p.id = :id and p.status NOT IN (:status)")
     Optional<Post> findByIdAndStatusNot(Long id, List<PostStatusEnum> status);
+
+    Long countPostByUserIdAndCreatedAtGreaterThan(Long id, Timestamp timestamp);
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.example.demo.Enum.PostStatusEnum;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostDto {
     private Long id;
     private UserDto user;

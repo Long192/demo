@@ -30,6 +30,10 @@ public class ExcelServiceTest {
     private FavouriteService favouriteService;
     @Mock
     private FriendService friendService;
+    @Mock
+    private PostService postService;
+    @Mock
+    private CommentService commentService;
     @InjectMocks
     private ExcelService excelService;
 
@@ -51,6 +55,8 @@ public class ExcelServiceTest {
     @Test
     void exportUserReport_generatesExcelReport() throws Exception {
         MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(postService.countPost(anyLong())).thenReturn(1L);
 
         excelService.exportUserReport(response);
 

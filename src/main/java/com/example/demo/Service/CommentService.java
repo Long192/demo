@@ -14,6 +14,9 @@ import com.example.demo.Model.Post;
 import com.example.demo.Model.User;
 import com.example.demo.Repository.CommentRepository;
 
+import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class CommentService {
     @Autowired
@@ -48,6 +51,11 @@ public class CommentService {
             return;
         }
         throw new CustomException(403, "cannot delete this comment");
+    }
+
+    public Long commentCount(Long id) {
+        return commentRepository.countByUserIdAndCreatedAtGreaterThan(id,
+                new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)));
     }
 
     public CommentDto editComment(Long id, UpdateCommentRequest request) throws Exception {

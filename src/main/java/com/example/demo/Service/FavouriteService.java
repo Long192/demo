@@ -23,8 +23,7 @@ public class FavouriteService {
     }
 
     public Favourite save(Favourite favourite) {
-        Favourite result = favouriteRepository.save(favourite);
-        return result;
+        return favouriteRepository.save(favourite);
     }
 
     public void delete(Favourite favourite){
