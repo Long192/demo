@@ -1,29 +1,27 @@
 package com.example.demo.Service;
 
-import com.example.demo.Exception.CustomException;
-import com.example.demo.Model.RefreshToken;
-import com.example.demo.Model.User;
-import com.example.demo.Repository.RefreshRepository;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.util.ReflectionTestUtils;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import com.example.demo.Exception.CustomException;
+import com.example.demo.Model.RefreshToken;
+import com.example.demo.Model.User;
+import com.example.demo.Repository.RefreshRepository;
 
 @SpringBootTest
 class RefreshServiceTest {
@@ -78,6 +76,9 @@ class RefreshServiceTest {
         when(refreshRepository.findByToken(anyString())).thenReturn(Optional.of(refreshToken));
 
         RefreshToken res = refreshService.findByToken(mockedUUID.toString());
+
+        assertNotNull(res);
+        assertEquals(refreshToken.getToken(), res.getToken());
     }
 
     @Test

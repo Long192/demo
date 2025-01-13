@@ -39,206 +39,204 @@ import com.example.demo.Utils.JwtUtil;
 
 @Service
 public class AuthService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private RefreshService refreshService;
-    @Autowired
-    private CacheManager cacheManager;
-    @Autowired
-    private ModelMapper mapper;
-    @Autowired
-    private Environment environment;
+  @Autowired
+  private UserRepository userRepository;
+  @Autowired
+  private JwtUtil jwtUtil;
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+  @Autowired
+  private AuthenticationManager authenticationManager;
+  @Autowired
+  private RefreshService refreshService;
+  @Autowired
+  private CacheManager cacheManager;
+  @Autowired
+  private ModelMapper mapper;
+  @Autowired
+  private Environment environment;
 
-    public UserDto signUp(SignUpRequest request) throws Exception {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        dateFormat.setLenient(false);
-        User user = new User();
+  public UserDto signUp(SignUpRequest request) throws Exception {
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    dateFormat.setLenient(false);
+    User user = new User();
 
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEtc(request.getEtc());
-        user.setRole(RoleEnum.user);
-        user.setFullname(request.getFullname());
-        user.setAvatar(request.getAvatar());
-        
-        try {
-            if (request.getDob() != null && !request.getDob().isBlank()) {
-                java.util.Date date = dateFormat.parse(request.getDob());
-                if(date.after(new java.util.Date())) {
-                    throw new CustomException(400, "Dob invalid");
-                }
-                user.setDob(new Date(date.getTime()));
-            }
-        } catch (ParseException  e) {
-            throw new CustomException(400, "Dob invalid");
+    user.setEmail(request.getEmail());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+    user.setEtc(request.getEtc());
+    user.setRole(RoleEnum.user);
+    user.setFullname(request.getFullname());
+    user.setAvatar(request.getAvatar());
+
+    try {
+      if (request.getDob() != null && !request.getDob().isBlank()) {
+        java.util.Date date = dateFormat.parse(request.getDob());
+        if (date.after(new java.util.Date())) {
+          throw new CustomException(400, "Dob invalid");
         }
-
-        user.setStatus(StatusEnum.active);
-        user.setAddress(request.getAddress());
-        User result = userRepository.save(user);
-        return mapper.map(result, UserDto.class);
+        user.setDob(new Date(date.getTime()));
+      }
+    } catch (ParseException e) {
+      throw new CustomException(400, "Dob invalid");
     }
 
-    public LoginResponse login(GetTokenRequest request) throws Exception {
-        LoginResponse response = new LoginResponse();
-        Otp otp = null;
-        Cache cache = cacheManager.getCache("otpCache");
-        if(cache == null){
-            throw new CustomException(500, "serverError");
-        }
+    user.setStatus(StatusEnum.active);
+    user.setAddress(request.getAddress());
+    User result = userRepository.save(user);
+    return mapper.map(result, UserDto.class);
+  }
 
-        otp = cache.get(request.getUserId(), Otp.class);
-
-        if (otp == null) {
-            throw new BadCredentialsException("login request not found");
-        }
-
-        if(!validateOtp(otp)){
-            throw new BadCredentialsException("otp expired");
-        }
-
-        if(!otp.getOtp().equals(request.getOtp()) ){
-            if(otp.getTryNumber() == 1){
-                cache.evict(otp.getUserId());
-                throw new CustomException(400, "Too many attempts. Please try again later");
-            }
-            otp.setTryNumber(otp.getTryNumber() - 1);
-            cache.put(otp.getUserId(), otp);
-            throw new CustomException(400, "otp invalid " + otp.getTryNumber() + " attempts left");
-        }
-
-        User user = userRepository.findById(otp.getUserId())
-                .orElseThrow(() -> new CustomException(404, "user not found"));
-        RefreshToken refreshToken = refreshService.findByUserId(user.getId());
-        String jwt = jwtUtil.generateToken(user);
-        String refresh;
-
-
-        if(refreshToken == null || refreshToken.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))){
-            if(refreshToken!= null){
-                refreshService.deleteRefreshToken(refreshToken);
-            }
-            refresh = refreshService.createRefreshToken(user);
-        }else{
-            refresh = refreshToken.getToken();
-        }
-
-        response.setToken(jwt);
-        response.setRefreshToken(refresh);
-        response.setId(user.getId());
-        response.setAddress(user.getAddress());
-        response.setDob(user.getDob() != null ? user.getDob().toString() : null);
-        response.setEmail(user.getEmail());
-        response.setFullname(user.getFullname());
-        cache.evict(user.getId());
-
-        return response;
+  public LoginResponse login(GetTokenRequest request) throws Exception {
+    LoginResponse response = new LoginResponse();
+    Otp otp = null;
+    Cache cache = cacheManager.getCache("otpCache");
+    if (cache == null) {
+      throw new CustomException(500, "serverError");
     }
 
-    public OtpDto loginOtp(LoginRequest request) throws Exception {
-        try {
-            authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        } catch (RuntimeException e) {
-            throw new Exception("wrong email or password");
-        }
+    otp = cache.get(request.getUserId(), Otp.class);
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new CustomException(404, "user not found"));
-        OtpDto otpDto = new OtpDto();
-        Otp cacheOtp = Otp.builder()
-                .userId(user.getId())
-                .otp(AppUtils.generateOtp())
-                .expiredAt(LocalDateTime.now().plusMinutes(5))
-                .tryNumber(5)
-                .build();
-        Cache cache = cacheManager.getCache("otpCache");
-
-        if(cache == null){
-            throw new CustomException(500, "server Error");
-        }
-
-        cache.put(user.getId(), cacheOtp);
-        otpDto.setOtp(cacheOtp.getOtp());
-        otpDto.setUserId(cacheOtp.getUserId());
-
-        return otpDto;
+    if (otp == null) {
+      throw new BadCredentialsException("login request not found");
     }
 
-    public ForgotPasswordResponse forgotPassword(String email) throws Exception {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
-        String token = UUID.randomUUID().toString();
-        String url =
-                environment.getProperty("base-url") + "/auth/reset-password?userId=" + user.getId() + "&token=" + token;
-        ForgotPassword forgotPassword = new ForgotPassword();
-
-        Cache cache = cacheManager.getCache("forgotPasswordCache");
-        if(cache == null){
-            throw new CustomException(500, "server error");
-        }
-
-        forgotPassword.setUserId(user.getId());
-        forgotPassword.setToken(token);
-        forgotPassword.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-        cache.put(user.getId(), forgotPassword);
-
-        return ForgotPasswordResponse.builder().url(url).build();
+    if (!validateOtp(otp)) {
+      throw new BadCredentialsException("otp expired");
     }
 
-    public void resetPassword(String password, String id, String token) throws Exception {
-        User user =
-                userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new CustomException(404, "user not found"));
-        
-        Cache cache = cacheManager.getCache("forgotPasswordCache");
-        if(cache == null){
-            throw new CustomException(500, "server error");
-        }
-
-        ForgotPassword forgotPassword = cache.get(user.getId(), ForgotPassword.class);
-
-        if (forgotPassword == null){
-            throw new CustomException(404, "reset password request not found");
-        }
-
-        if(!forgotPassword.getToken().equals(token)){
-            cache.evict(user.getId());
-            throw new CustomException(404, "token invalid");
-        }
-
-        if (validateResetPasswordToken(forgotPassword, token)){
-            throw new CustomException(404, "reset password request expired");
-        }
-
-        user.setPassword(passwordEncoder.encode(password));
-        userRepository.save(user);
-        cache.evict(user.getId());
+    if (!otp.getOtp().equals(request.getOtp())) {
+      if (otp.getTryNumber() == 1) {
+        cache.evict(otp.getUserId());
+        throw new CustomException(400, "Too many attempts. Please try again later");
+      }
+      otp.setTryNumber(otp.getTryNumber() - 1);
+      cache.put(otp.getUserId(), otp);
+      throw new CustomException(400, "otp invalid " + otp.getTryNumber() + " attempts left");
     }
 
-    public LoginResponse refreshToken(String refreshToken) throws Exception {
-        LoginResponse response = new LoginResponse();
-        RefreshToken refresh = refreshService.findByToken(refreshToken);
-        if(refresh.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))){
-            throw new CustomException(400, "refresh token expired");
-        }
-        User user = refresh.getUser();
-        String token = jwtUtil.generateToken(user);
-        response.setToken(token);
-        
-        return response;
+    User user = userRepository.findById(otp.getUserId())
+        .orElseThrow(() -> new CustomException(404, "user not found"));
+    RefreshToken refreshToken = refreshService.findByUserId(user.getId());
+    String jwt = jwtUtil.generateToken(user);
+    String refresh;
+
+    if (refreshToken == null || refreshToken.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))) {
+      if (refreshToken != null) {
+        refreshService.deleteRefreshToken(refreshToken);
+      }
+      refresh = refreshService.createRefreshToken(user);
+    } else {
+      refresh = refreshToken.getToken();
     }
 
-    private boolean validateOtp(Otp otp) {
-        return otp.getExpiredAt().isAfter(LocalDateTime.now());
+    response.setToken(jwt);
+    response.setRefreshToken(refresh);
+    response.setId(user.getId());
+    response.setAddress(user.getAddress());
+    response.setDob(user.getDob() != null ? user.getDob().toString() : null);
+    response.setEmail(user.getEmail());
+    response.setFullname(user.getFullname());
+    cache.evict(user.getId());
+
+    return response;
+  }
+
+  public OtpDto loginOtp(LoginRequest request) throws Exception {
+    try {
+      authenticationManager
+          .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+    } catch (RuntimeException e) {
+      throw new Exception("wrong email or password");
     }
 
-    private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {
-        return forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()));
+    User user = userRepository.findByEmail(request.getEmail())
+        .orElseThrow(() -> new CustomException(404, "user not found"));
+    OtpDto otpDto = new OtpDto();
+    Otp cacheOtp = Otp.builder()
+        .userId(user.getId())
+        .otp(AppUtils.generateOtp())
+        .expiredAt(LocalDateTime.now().plusMinutes(5))
+        .tryNumber(5)
+        .build();
+    Cache cache = cacheManager.getCache("otpCache");
+
+    if (cache == null) {
+      throw new CustomException(500, "server Error");
     }
+
+    cache.put(user.getId(), cacheOtp);
+    otpDto.setOtp(cacheOtp.getOtp());
+    otpDto.setUserId(cacheOtp.getUserId());
+
+    return otpDto;
+  }
+
+  public ForgotPasswordResponse forgotPassword(String email) throws Exception {
+    User user = userRepository.findByEmail(email).orElseThrow(() -> new CustomException(404, "user not found"));
+    String token = UUID.randomUUID().toString();
+    String url = environment.getProperty("base-url") + "/auth/reset-password?userId=" + user.getId() + "&token="
+        + token;
+    ForgotPassword forgotPassword = new ForgotPassword();
+
+    Cache cache = cacheManager.getCache("forgotPasswordCache");
+    if (cache == null) {
+      throw new CustomException(500, "server error");
+    }
+
+    forgotPassword.setUserId(user.getId());
+    forgotPassword.setToken(token);
+    forgotPassword.setExpiredAt(new Timestamp(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
+    cache.put(user.getId(), forgotPassword);
+
+    return ForgotPasswordResponse.builder().url(url).build();
+  }
+
+  public void resetPassword(String password, String id, String token) throws Exception {
+    User user = userRepository.findById(Long.valueOf(id)).orElseThrow(() -> new CustomException(404, "user not found"));
+
+    Cache cache = cacheManager.getCache("forgotPasswordCache");
+    if (cache == null) {
+      throw new CustomException(500, "server error");
+    }
+
+    ForgotPassword forgotPassword = cache.get(user.getId(), ForgotPassword.class);
+
+    if (forgotPassword == null) {
+      throw new CustomException(404, "reset password request not found");
+    }
+
+    if (!forgotPassword.getToken().equals(token)) {
+      cache.evict(user.getId());
+      throw new CustomException(404, "token invalid");
+    }
+
+    if (validateResetPasswordToken(forgotPassword, token)) {
+      throw new CustomException(404, "reset password request expired");
+    }
+
+    user.setPassword(passwordEncoder.encode(password));
+    userRepository.save(user);
+    cache.evict(user.getId());
+  }
+
+  public LoginResponse refreshToken(String refreshToken) throws Exception {
+    LoginResponse response = new LoginResponse();
+    RefreshToken refresh = refreshService.findByToken(refreshToken);
+    if (refresh.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))) {
+      throw new CustomException(400, "refresh token expired");
+    }
+    User user = refresh.getUser();
+    String token = jwtUtil.generateToken(user);
+    response.setToken(token);
+
+    return response;
+  }
+
+  private boolean validateOtp(Otp otp) {
+    return otp.getExpiredAt().isAfter(LocalDateTime.now());
+  }
+
+  private boolean validateResetPasswordToken(ForgotPassword forgotPassword, String token) {
+    return forgotPassword.getExpiredAt().before(new Timestamp(System.currentTimeMillis()));
+  }
 }
