@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CommentDto {
     private Long id;
     private String content;
+    private UserDto user;
     private String createdAt;
     private String updatedAt;
 }

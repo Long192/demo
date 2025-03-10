@@ -36,7 +36,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable).cors(Customizer.withDefaults())
             .authorizeHttpRequests(
-                request -> request.requestMatchers("/auth/**", "/swagger-ui/**", "/swagger/**")
+                request -> request.requestMatchers("/auth/**", "/swagger-ui/**", "/swagger/**", "/upload")
                     .permitAll().anyRequest().authenticated())
             .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())

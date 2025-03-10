@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@AtLeastOneFieldNotNull(fields = {"content", "images"}, message = "content or image required")
+@AtLeastOneFieldNotNull(fields = {"content", "images"}, message = "content or images required")
 public class CreatePostRequest {
     @Size(max = 3000, message = "content max {max} characters")
     private String content;
