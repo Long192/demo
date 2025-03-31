@@ -174,7 +174,6 @@ public class PostService {
         post.getLikedByUsers().add(user);
 
         return modelMapper.map(post, PostDto.class);
-        
     }
 
     @Transactional

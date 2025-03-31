@@ -135,6 +135,7 @@ public class AuthService {
     response.setAddress(user.getAddress());
     response.setDob(user.getDob() != null ? user.getDob().toString() : null);
     response.setEmail(user.getEmail());
+    response.setAvatar(user.getAvatar());
     response.setFullname(user.getFullname());
     cache.evict(user.getId());
 

@@ -85,4 +85,10 @@ public class UserService implements UserDetailsService {
         User user = userRepository.save(userInfo);
         return mapper.map(user, UserDto.class);
     }
+
+    public UserDto me() throws Exception {
+      var me = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+      var user = userRepository.findById(me.getId()).orElseThrow(() -> new CustomException(404, "user not found"));
+      return mapper.map(user, UserDto.class);
+    }
 }

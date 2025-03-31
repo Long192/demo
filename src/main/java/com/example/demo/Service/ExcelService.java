@@ -3,7 +3,6 @@ package com.example.demo.Service;
 import java.sql.Timestamp;
 import java.util.concurrent.TimeUnit;
 
-import com.example.demo.Repository.PostRepository;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
@@ -21,8 +20,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class ExcelService {
-    @Autowired
-    private UserService userService;
     @Autowired
     private FavouriteService favouriteService;
     @Autowired

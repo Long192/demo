@@ -74,4 +74,10 @@ public class UserController {
     public ResponseEntity<CustomResponse<UserDto>> updateUserInfo(@RequestBody @Valid UpdateUserRequest req) throws Exception {
         return ResponseEntity.ok(CustomResponse.<UserDto>builder().data(userService.updateUser(req)).build());
     }
+
+    @Operation(summary = "get me", description = "get current user infomation")
+    @GetMapping("/me")
+    public ResponseEntity<CustomResponse<UserDto>> me() throws Exception {
+      return ResponseEntity.ok(CustomResponse.<UserDto>builder().data(userService.me()).build());
+    }
 }

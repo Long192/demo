@@ -27,11 +27,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.user.id in :ids AND p.createdAt > :timestamp")
     Page<Post> findPostByUserIdsAndCreatedAt(@Param("ids") List<Long> ids, @Param("timestamp") Timestamp timestamp, Pageable page);
 
-    @Query("SELECT p FROM Post p WHERE " +
+    @Query("SELECT p FROM Post p " +
+           "LEFT JOIN FETCH Comment c ON c.post.id = p.id WHERE" +
            "(p.user.id IN :ids AND p.status != 'PRIVATE') OR " +
            "(p.user.id = :id) OR " +
            "(p.status = 'PUBLIC' AND NOT(p.user.id IN :ids AND p.status != 'PRIVATE')) " +
-           "ORDER BY CASE WHEN p.user.id IN :ids THEN 0 ELSE 1 END, p.createdAt DESC")
+           "ORDER BY CASE WHEN p.user.id IN :ids THEN 0 ELSE 1 END, p.createdAt DESC, c.createdAt DESC")
     Page<Post> findByUserIdsOrderByCreatedAt(List<Long> ids, Long id, Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.id = :id and p.status NOT IN (:status)")
