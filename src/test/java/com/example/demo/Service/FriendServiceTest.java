@@ -267,7 +267,7 @@ public class FriendServiceTest {
         assertNotNull(users);
         assertNotNull(users.getContent());
         assertEquals(users.getSize(), 1);
-        assertEquals(users.getContent().getFirst().getId(), user1.getId());
+        assertEquals(users.getContent().get(0).getId(), user1.getId());
     }
 
     @Test

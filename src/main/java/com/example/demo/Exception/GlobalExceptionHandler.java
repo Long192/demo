@@ -47,7 +47,7 @@ public class GlobalExceptionHandler<T> {
     ResponseEntity<CustomResponse<T>> handlingMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
-        response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
+        response.setMessage(exception.getAllErrors().get(0).getDefaultMessage());
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -56,7 +56,7 @@ public class GlobalExceptionHandler<T> {
         HandlerMethodValidationException exception) {
         CustomResponse<T> response = new CustomResponse<>();
         response.setStatus(400);
-        response.setMessage(exception.getAllErrors().getFirst().getDefaultMessage());
+        response.setMessage(exception.getAllErrors().get(0).getDefaultMessage());
         return ResponseEntity.badRequest().body(response);
     }
 

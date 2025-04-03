@@ -187,7 +187,7 @@ public class PostServiceTest {
         CustomPage<PostDto> res = postService.findAndPaginate(page, "search");
 
         assertNotNull(res);
-        assertEquals(postDtos.getContent().getFirst().getId(), res.getContent().getFirst().getId());
+        assertEquals(postDtos.getContent().get(0).getId(), res.getContent().get(0).getId());
     }
 
     @Test
@@ -213,7 +213,7 @@ public class PostServiceTest {
         CustomPage<PostDto> res = postService.findMyPostsAndPaginate(page, "search");
 
         assertNotNull(res);
-        assertEquals(postDtos.getContent().getFirst().getId(), res.getContent().getFirst().getId());
+        assertEquals(postDtos.getContent().get(0).getId(), res.getContent().get(0).getId());
     }
 
     @Test

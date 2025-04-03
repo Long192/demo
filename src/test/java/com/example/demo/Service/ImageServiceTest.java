@@ -83,7 +83,7 @@ public class ImageServiceTest {
         List<Image> images = imageService.editImage(List.of("url1"), post);
 
         assertNotNull(images);
-        assertEquals(images.getFirst().getUrl(), "url1");
+        assertEquals(images.get(0).getUrl(), "url1");
     }
 
 

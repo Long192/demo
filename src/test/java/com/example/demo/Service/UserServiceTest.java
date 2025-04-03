@@ -108,7 +108,7 @@ public class UserServiceTest {
         Page<User> users = userService.findAll(req, "");
 
         assertNotNull(users.getContent());
-        assertEquals(users.getContent().getFirst(), user);
+        assertEquals(users.getContent().get(0), user);
     }
 
     @Test
